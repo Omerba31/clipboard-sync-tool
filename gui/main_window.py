@@ -447,14 +447,28 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
         
-        # Discovered devices
-        discovered_group = QGroupBox("Discovered Devices")
+        # Cloud relay status
+        cloud_info = QLabel("💡 Cloud Relay: Use the '☁️ Cloud Relay' button in header to connect to mobile devices.\nLocal P2P: Devices on the same WiFi will appear below.")
+        cloud_info.setStyleSheet("""
+            QLabel {
+                background-color: #E3F2FD;
+                color: #1976D2;
+                padding: 12px;
+                border-radius: 6px;
+                margin-bottom: 10px;
+            }
+        """)
+        cloud_info.setWordWrap(True)
+        layout.addWidget(cloud_info)
+        
+        # Discovered devices (local P2P)
+        discovered_group = QGroupBox("Discovered Devices (Local Network)")
         self.discovered_layout = QVBoxLayout()
         self.discovered_layout.addStretch()
         discovered_group.setLayout(self.discovered_layout)
         
-        # Paired devices  
-        paired_group = QGroupBox("Paired Devices")
+        # Paired devices (local P2P)
+        paired_group = QGroupBox("Paired Devices (Local Network)")
         self.paired_layout = QVBoxLayout()
         self.paired_layout.addStretch()
         paired_group.setLayout(self.paired_layout)

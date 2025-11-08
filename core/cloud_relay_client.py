@@ -111,6 +111,12 @@ class CloudRelayClient:
             True if connected successfully
         """
         try:
+            # If already connected, disconnect first
+            if self.sio.connected:
+                logger.info("Already connected, disconnecting first...")
+                await self.disconnect_from_server()
+                await asyncio.sleep(0.5)
+            
             # Store connection info
             self.server_url = server_url
             self.room_id = room_id

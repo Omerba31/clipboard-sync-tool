@@ -187,8 +187,13 @@ class SyncEngine:
         # Don't sync if it came from another device (local or cloud)
         if self.incoming_clipboard:
             # Check if it's the same content
-            if self.incoming_clipboard == clipboard_data.checksum or \
-               self.incoming_clipboard == clipboard_data.text_content:
+            if self.incoming_clipboard == clipboard_data.checksum:
+                self.incoming_clipboard = None
+                return
+            # For text content, also check the actual content
+            if clipboard_data.content_type == ContentType.TEXT and \
+               isinstance(clipboard_data.content, str) and \
+               self.incoming_clipboard == clipboard_data.content:
                 self.incoming_clipboard = None
                 return
         
@@ -221,10 +226,11 @@ class SyncEngine:
             
             logger.info(f"Clipboard synced to {len(self.paired_devices)} devices")
         
-        # Send to cloud relay if connected
+        # Send to cloud relay if connected (only text for now)
         if self.cloud_relay_enabled and clipboard_data.content_type == ContentType.TEXT:
+            text_content = clipboard_data.content if isinstance(clipboard_data.content, str) else str(clipboard_data.content)
             asyncio.run_coroutine_threadsafe(
-                self._send_to_cloud_relay(clipboard_data.text_content, 'text'),
+                self._send_to_cloud_relay(text_content, 'text'),
                 self.loop
             )
     
