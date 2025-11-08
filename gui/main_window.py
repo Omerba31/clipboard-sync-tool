@@ -1174,39 +1174,66 @@ class MainWindow(QMainWindow):
                               "Sync engine not available. Core modules may not be loaded.")
             return
         
-        # Connect to cloud relay in async (non-blocking)
+        # Connect in separate thread to avoid blocking GUI
+        import threading
         import asyncio
-        from PyQt6.QtCore import QTimer
+        from PyQt6.QtCore import QTimer, pyqtSignal
         
-        # Close the input dialog first
+        # Store connection state
+        self._connection_result = {'success': False, 'error': None}
+        
+        # Close the input dialog
         dialog.accept()
         
-        # Show connecting message in a progress dialog
+        # Show non-modal progress message
         from PyQt6.QtWidgets import QProgressDialog
-        progress = QProgressDialog("Connecting to cloud relay...\n" + url, None, 0, 0, self)
+        progress = QProgressDialog("Connecting to cloud relay...\n" + url, "Cancel", 0, 0, self)
         progress.setWindowTitle("Connecting...")
-        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
         progress.setCancelButton(None)
         progress.setMinimumDuration(0)
+        progress.setValue(0)
         progress.show()
         
-        async def do_connect():
-            success = await self.sync_engine.connect_to_cloud_relay(url, room_id)
-            return success
-        
-        def on_connected(future):
-            """Callback when connection completes"""
+        def do_connect_thread():
+            """Run connection in thread"""
             try:
+                # Run async connection
+                future = asyncio.run_coroutine_threadsafe(
+                    self.sync_engine.connect_to_cloud_relay(url, room_id),
+                    self.sync_engine.loop
+                )
+                # Wait for result with timeout
+                success = future.result(timeout=10)
+                self._connection_result = {'success': success, 'error': None}
+            except Exception as e:
+                self._connection_result = {'success': False, 'error': str(e)}
+        
+        # Start connection thread
+        thread = threading.Thread(target=do_connect_thread, daemon=True)
+        thread.start()
+        
+        # Check connection status periodically
+        def check_status():
+            if thread.is_alive():
+                # Still connecting, check again
+                QTimer.singleShot(100, check_status)
+            else:
+                # Connection complete
                 progress.close()
-                success = future.result()
                 
-                if success:
+                result = self._connection_result
+                if result['success']:
                     QMessageBox.information(self, "✅ Connected!", 
                                           f"Successfully connected to cloud relay!\n\n"
                                           f"Server: {url}\n"
                                           f"Room: {room_id}\n\n"
                                           f"Your clipboard is now syncing with mobile devices in this room.")
                     self.status_label.setText("🟢 Sync Active (Cloud + Local)")
+                elif result['error']:
+                    QMessageBox.critical(self, "Error", 
+                                       f"Failed to connect:\n{result['error']}\n\n"
+                                       f"Check the console for more details.")
                 else:
                     QMessageBox.warning(self, "Connection Failed", 
                                       f"Could not connect to cloud relay.\n\n"
@@ -1214,26 +1241,9 @@ class MainWindow(QMainWindow):
                                       f"• Server URL is correct\n"
                                       f"• Server is running\n"
                                       f"• Internet connection is working")
-            except Exception as e:
-                progress.close()
-                QMessageBox.critical(self, "Error", 
-                                   f"Failed to connect:\n{str(e)}\n\n"
-                                   f"Check the console for more details.")
         
-        try:
-            # Run connection in sync engine's event loop
-            future = asyncio.run_coroutine_threadsafe(
-                do_connect(),
-                self.sync_engine.loop
-            )
-            
-            # Add callback for when it completes
-            future.add_done_callback(on_connected)
-            
-        except Exception as e:
-            progress.close()
-            QMessageBox.critical(self, "Error", 
-                               f"Failed to start connection:\n{str(e)}")
+        # Start checking after 100ms
+        QTimer.singleShot(100, check_status)
     
     def pair_device(self, device):
         """Pair with a device"""
