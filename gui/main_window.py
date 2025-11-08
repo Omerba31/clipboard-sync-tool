@@ -468,6 +468,13 @@ class MainWindow(QMainWindow):
         self.cloud_details_label.setWordWrap(True)
         cloud_card_layout.addWidget(self.cloud_details_label)
         
+        # Device list label
+        self.cloud_devices_label = QLabel("")
+        self.cloud_devices_label.setStyleSheet("color: #444; font-size: 11px; margin-top: 8px;")
+        self.cloud_devices_label.setWordWrap(True)
+        self.cloud_devices_label.setVisible(False)
+        cloud_card_layout.addWidget(self.cloud_devices_label)
+        
         # Test button (hidden by default)
         self.cloud_test_btn = QPushButton("📤 Test Sync")
         self.cloud_test_btn.setStyleSheet("""
@@ -828,7 +835,24 @@ class MainWindow(QMainWindow):
                     if hasattr(self.sync_engine, 'cloud_relay') and self.sync_engine.cloud_relay:
                         room_id = self.sync_engine.cloud_relay.room_id
                         server = self.sync_engine.cloud_relay.server_url
-                        self.cloud_details_label.setText(f"Server: {server}\nRoom: {room_id}\n✅ Syncing with mobile devices")
+                        device_name = self.sync_engine.cloud_relay.device_name
+                        self.cloud_details_label.setText(f"Server: {server}\nRoom: {room_id}\nYour device: {device_name}")
+                        
+                        # Show device list if available
+                        if hasattr(self.sync_engine.cloud_relay, 'devices') and self.sync_engine.cloud_relay.devices:
+                            device_icons = {'desktop': '🖥️', 'mobile': '📱', 'tablet': '📱'}
+                            device_list = []
+                            for device in self.sync_engine.cloud_relay.devices:
+                                icon = device_icons.get(device.get('deviceType', 'desktop'), '🖥️')
+                                name = device.get('deviceName', 'Unknown')
+                                is_you = ' (You)' if device.get('deviceId') == self.sync_engine.cloud_relay.device_id else ''
+                                device_list.append(f"{icon} {name}{is_you}")
+                            
+                            self.cloud_devices_label.setText("Connected devices:\n" + "\n".join(device_list))
+                            self.cloud_devices_label.setVisible(True)
+                        else:
+                            self.cloud_devices_label.setVisible(False)
+                        
                         self.cloud_status_card.setStyleSheet("""
                             QWidget {
                                 background-color: #E8F5E9;
@@ -841,6 +865,7 @@ class MainWindow(QMainWindow):
                     self.cloud_status_label.setText("☁️ Cloud Relay: Not connected")
                     self.cloud_status_label.setStyleSheet("font-weight: bold; color: #E65100;")
                     self.cloud_details_label.setText("Click '☁️ Cloud Relay' button to connect to mobile devices")
+                    self.cloud_devices_label.setVisible(False)
                     self.cloud_status_card.setStyleSheet("""
                         QWidget {
                             background-color: #FFF3E0;
@@ -1201,6 +1226,34 @@ class MainWindow(QMainWindow):
         """)
         layout.addWidget(self.room_id_input)
         
+        # Device name input
+        device_name_label = QLabel("Device Name (shown to other devices):")
+        device_name_label.setStyleSheet("font-weight: bold; margin-top: 15px;")
+        layout.addWidget(device_name_label)
+        
+        self.device_name_input = QLineEdit()
+        # Auto-fill with hostname
+        import socket
+        import platform
+        try:
+            hostname = socket.gethostname() or platform.node() or "Desktop"
+        except:
+            hostname = "Desktop"
+        self.device_name_input.setPlaceholderText(hostname)
+        self.device_name_input.setText(hostname)
+        self.device_name_input.setStyleSheet("""
+            QLineEdit {
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #4CAF50;
+            }
+        """)
+        layout.addWidget(self.device_name_input)
+        
         # Info box
         info_box = QLabel("💡 Tip: Use the same Room ID on your mobile device to sync clipboards across all your devices!")
         info_box.setStyleSheet("""
@@ -1262,6 +1315,7 @@ class MainWindow(QMainWindow):
         """Connect to cloud relay with given URL and room ID"""
         url = self.cloud_url_input.text().strip()
         room_id = self.room_id_input.text().strip()
+        device_name = self.device_name_input.text().strip()
         
         if not url:
             QMessageBox.warning(dialog, "Missing URL", "Please enter your cloud relay URL")
@@ -1270,6 +1324,15 @@ class MainWindow(QMainWindow):
         if not room_id:
             QMessageBox.warning(dialog, "Missing Room ID", "Please enter a Room ID")
             return
+        
+        # Use hostname if device name is empty
+        if not device_name:
+            import socket
+            import platform
+            try:
+                device_name = socket.gethostname() or platform.node() or "Desktop"
+            except:
+                device_name = "Desktop"
         
         # Add https:// if not present
         if not url.startswith(('http://', 'https://')):
@@ -1307,7 +1370,7 @@ class MainWindow(QMainWindow):
             try:
                 # Run async connection
                 future = asyncio.run_coroutine_threadsafe(
-                    self.sync_engine.connect_to_cloud_relay(url, room_id),
+                    self.sync_engine.connect_to_cloud_relay(url, room_id, device_name),
                     self.sync_engine.loop
                 )
                 # Wait for result with timeout

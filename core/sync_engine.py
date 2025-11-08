@@ -448,13 +448,14 @@ class SyncEngine:
     
     # ==================== Cloud Relay Methods ====================
     
-    async def connect_to_cloud_relay(self, server_url: str, room_id: str) -> bool:
+    async def connect_to_cloud_relay(self, server_url: str, room_id: str, device_name: str = None) -> bool:
         """
         Connect to cloud relay server for mobile sync
         
         Args:
             server_url: URL of the cloud relay server (e.g., https://your-app.fly.dev)
             room_id: Room ID to join for syncing
+            device_name: Optional custom device name (defaults to hostname)
             
         Returns:
             True if connected successfully
@@ -470,10 +471,11 @@ class SyncEngine:
                     on_devices_updated=self._on_devices_updated
                 )
             
-            # Get device name from system
-            import platform
-            import socket
-            device_name = socket.gethostname() or platform.node() or 'Desktop'
+            # Get device name from parameter or system
+            if not device_name:
+                import platform
+                import socket
+                device_name = socket.gethostname() or platform.node() or 'Desktop'
             
             # Connect to server
             success = await self.cloud_relay.connect_to_server(
