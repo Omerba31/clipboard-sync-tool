@@ -49,7 +49,8 @@ class CloudRelayClient:
             if self.room_id:
                 await self.sio.emit('join_room', {
                     'room_id': self.room_id,
-                    'device_id': self.device_id
+                    'device_id': self.device_id,
+                    'device_type': 'desktop'
                 })
                 logger.info(f"Joined room: {self.room_id}")
         

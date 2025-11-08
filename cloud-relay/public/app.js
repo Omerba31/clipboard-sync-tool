@@ -14,7 +14,44 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('roomIdInput').value = saved.roomId;
         document.getElementById('deviceNameInput').value = saved.deviceName;
     }
+    
+    // Add paste event listener for images
+    const textarea = document.getElementById('sendText');
+    textarea.addEventListener('paste', handlePaste);
 });
+
+// Handle paste events (including images)
+function handlePaste(event) {
+    const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            event.preventDefault(); // Prevent default paste
+            
+            const file = item.getAsFile();
+            if (file) {
+                // Check file size (limit to 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('⚠️ Image too large (max 5MB)', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage = e.target.result; // Base64 data URL
+                    
+                    // Show preview
+                    document.getElementById('previewImg').src = selectedImage;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    document.getElementById('clearImageBtn').style.display = 'inline-block';
+                    
+                    showNotification('✅ Image pasted! Tap Send to share');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+}
 
 function connect() {
     roomId = document.getElementById('roomIdInput').value.trim();
@@ -53,11 +90,22 @@ function connectToServer() {
         console.log('[✓] Connected to relay server');
         updateStatus('Connected', true);
 
+        // Detect device type automatically
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isTablet = /iPad|Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+        
+        let detectedType = 'desktop';
+        if (isMobile && !isTablet) {
+            detectedType = 'mobile';
+        } else if (isTablet) {
+            detectedType = 'tablet';
+        }
+
         // Register device
         socket.emit('register', {
             deviceId,
             deviceName,
-            deviceType: 'mobile',
+            deviceType: detectedType,
             roomId
         });
 
