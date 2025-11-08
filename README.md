@@ -1,121 +1,98 @@
-# Clipboard Sync Tool
+# 📋 Clipboard Sync Tool
 
-A cross-platform clipboard synchronization tool that allows seamless clipboard sharing between devices.
+Sync your clipboard between **desktop computers** and **mobile devices** - works locally or over the internet!
 
-**Sync Options:**
-- 🖥️ **Desktop ↔ Desktop**: Local P2P on same network with end-to-end encryption
-- 📱 **Desktop ↔ Mobile**: Cloud relay via Fly.io (works anywhere, FREE tier available)
+## ⚡ Quick Start
 
-## Features
+### 1️⃣ Install (Desktop)
 
-- 📋 **Real-time Clipboard Sync** - Automatically sync clipboard content across devices
-- 📱 **Mobile Support** - Cloud relay for mobile devices (iOS/Android via PWA)
-- 🌐 **Cloud Relay** - Sync anywhere via FREE Fly.io hosting
-- 🔒 **Encrypted Transfer** - All clipboard data is encrypted during transfer (local P2P)
-- 🖼️ **Multiple Content Types** - Support for text, images, files, URLs, and more
-- 🎨 **Modern GUI** - Clean PyQt6-based interface with emoji icons
-- 🔍 **Search & Filter** - Quickly find items in clipboard history
-- 🌐 **Network Discovery** - Automatic device discovery on local network (desktop-to-desktop)
-
-## Requirements
-
-**Desktop App:**
-- Python 3.8+
-- Windows/Linux/macOS
-- Local network connection
-
-**Cloud Relay (Optional, for mobile sync):**
-- Node.js 18+
-- Fly.io account (free tier available)
-
-## Installation
-
-### Option 1: Automated Installation (Recommended)
-
-**Windows (PowerShell):**
-```powershell
-# Clone the repository
+```bash
+# Clone and install
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
-
-# Allow script execution (if needed - run PowerShell as Administrator)
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-# Run installer (installs both Python and Node.js dependencies)
-.\install.ps1
-```
-
-**Note:** If you get "cannot be loaded because running scripts is disabled", run the `Set-ExecutionPolicy` command above.
-
-**Mac/Linux:**
-```bash
-# Clone the repository
-git clone https://github.com/Omerba31/clipboard-sync-tool.git
-cd clipboard-sync-tool
-
-# Make installer executable and run
-chmod +x install.sh
-./install.sh
-```
-
-The installer will:
-- ✅ Check for Python and Node.js
-- ✅ Install Python dependencies (desktop app)
-- ✅ Install Node.js dependencies (cloud relay)
-- ✅ Report any missing prerequisites
-
-### Option 2: Manual Installation
-
-**Step 1: Clone the repository**
-```bash
-git clone https://github.com/Omerba31/clipboard-sync-tool.git
-cd clipboard-sync-tool
-```
-
-**Step 2: Install Python dependencies (Desktop App)**
-```bash
-# Optional: Create virtual environment
-python -m venv venv
-venv\Scripts\activate      # Windows
-source venv/bin/activate   # Mac/Linux
-
-# Install dependencies
 pip install -r requirements.txt
-```
 
-**Step 3: Install Node.js dependencies (Cloud Relay - Optional)**
-```bash
-cd cloud-relay
-npm install
-cd ..
-```
-
-## Usage
-
-### Quick Start Guide
-
-**1. Launch the Application**
-```bash
+# Run the app
 python main.py
 ```
 
-**2. First Time Setup**
-- The app will start with sync **active** by default (automatically monitoring)
-- Your device will appear in the **Devices** tab
+### 2️⃣ Sync with Mobile
 
-**3. Pairing Devices**
+**Option A: Use the public cloud relay (easiest)**
+1. Desktop: Click **"☁️ Cloud Relay"** → Enter:
+   - URL: `https://clipboard-sync-tool.fly.dev`
+   - Room ID: `your-room-name`
+2. Mobile: Open `https://clipboard-sync-tool.fly.dev` → Enter same Room ID
+3. Done! Copy/paste on either device
 
-There are two ways to pair devices:
+**Option B: Deploy your own cloud relay (FREE)**
+```bash
+.\deploy-cloud-relay.ps1  # Windows
+./deploy-cloud-relay.sh   # Mac/Linux
+```
+Then use your own Fly.io URL instead.
 
-#### Option A: QR Code Pairing (Recommended for Mobile)
-1. Click the **"Devices"** tab
-2. Click **"Show QR"** button
-3. From your mobile device:
-   - Scan the QR code with your camera app
-   - Open the link (e.g., `http://192.168.1.100:8080`)
-   - Enter a device name (e.g., "My iPhone")
-   - Click **"Pair Device"**
-4. The device will appear in your devices list
+### 3️⃣ Sync Desktop-to-Desktop (same WiFi)
+
+1. Computer 1: Click **"📱 Local P2P"** → Show QR
+2. Computer 2: Click **"� Local P2P"** → Enter QR Data → Paste → Pair
+3. Done! Clipboards stay in sync
+
+---
+
+## ✨ Features
+
+- � **Instant sync** - Copy on one device, paste on another
+- 📱 **Mobile support** - Works on iPhone, Android (via web app)
+- 🌐 **Works anywhere** - Cloud relay doesn't require same network
+- 🔒 **Secure** - End-to-end encryption for local P2P
+- 🎨 **Beautiful UI** - Modern interface with dark mode support
+
+## 📦 Requirements
+
+- Python 3.8+ (desktop app)
+- Node.js 18+ (only if deploying your own cloud relay)
+
+---
+
+## 🔧 Advanced Setup
+
+### Manual Installation
+
+```bash
+# Clone repo
+git clone https://github.com/Omerba31/clipboard-sync-tool.git
+cd clipboard-sync-tool
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run
+python main.py
+```
+
+### Deploy Your Own Cloud Relay (Optional)
+
+**Why?** Host your own relay server on Fly.io (FREE 160GB/month)
+
+**Windows:**
+```powershell
+.\deploy-cloud-relay.ps1
+```
+
+**Mac/Linux:**
+```bash
+chmod +x deploy-cloud-relay.sh
+./deploy-cloud-relay.sh
+```
+
+The script will:
+- ✅ Install Fly CLI
+- ✅ Authenticate with Fly.io
+- ✅ Deploy your cloud relay
+- ✅ Give you your app URL
+
+Then use your URL instead of the public one!
 
 #### Option B: Manual QR Data Entry (For Desktop-to-Desktop)
 1. On Device A: Click **"Show QR"** → Copy the QR data text
@@ -160,91 +137,10 @@ python main.py
 **Computer 2:**
 ```bash
 python main.py  
-# Click "Enter QR Data" tab → Paste the QR data → Click "Pair"
+# Click "📱 Local P2P" → "Enter QR Data" tab → Paste → Pair
 ```
 
-Both computers are now synced!
-
-### Mobile Device Pairing
-
-#### Cloud Relay (Required for Mobile) 🌐
-
-**Why Cloud Relay?**
-Mobile browsers cannot act as P2P servers, so direct local sync isn't possible. The cloud relay bridges desktop ↔ mobile communication.
-
-**Features:**
-- ✅ **Bidirectional sync** (mobile ↔ desktop)
-- ✅ **Works anywhere** (no same network required)
-- ✅ **FREE hosting** on Fly.io
-- ✅ **Built-in protection** (won't exceed free tier)
-- ✅ **Mobile PWA** (install as app on home screen)
-- ✅ **Real-time sync** via WebSocket
-
-**Quick Setup:**
-
-**Option A - Automated (Recommended):**
-```powershell
-# Windows
-.\deploy-cloud-relay.ps1
-
-# Mac/Linux
-chmod +x deploy-cloud-relay.sh
-./deploy-cloud-relay.sh
-```
-The script will:
-- Install Fly CLI if needed
-- Authenticate with Fly.io
-- Deploy the cloud relay
-- Show you the app URL
-
-**Option B - Manual:**
-```bash
-# 1. Install Fly CLI (if not installed)
-# Windows: iwr https://fly.io/install.ps1 -useb | iex
-# Mac/Linux: curl -L https://fly.io/install.sh | sh
-
-# 2. Deploy relay server
-cd cloud-relay
-fly auth login
-fly launch
-fly deploy
-
-# 3. Open on mobile
-https://your-app.fly.dev
-
-# 4. Enter same Room ID on desktop and mobile
-```
-
-**See full guide:** [cloud-relay/README.md](cloud-relay/README.md)
-
-**Built-in Free Tier Protection:**
-- 150MB bandwidth/month (enough for 150,000+ text syncs)
-- 50 simultaneous connections max
-- 60 messages per minute per device
-- 100KB max message size
-- Automatic monthly reset
-- Real-time usage monitoring
-
-**Using Cloud Relay:**
-
-**On Desktop:**
-1. Launch app: `python main.py`
-2. Click "☁️ Cloud Relay" button
-3. Enter your Fly.io URL (e.g., `https://your-app.fly.dev`)
-4. Enter a Room ID (e.g., `my-clipboard`)
-5. Click "Connect"
-
-**On Mobile:**
-1. Open your Fly.io URL in browser
-2. Enter the **same Room ID** as desktop
-3. Copy/paste clipboard content
-
-Both devices are now syncing through the cloud! 🎉
-
-**Sync Modes:**
-- **Local P2P**: Desktop ↔ Desktop (same network, fast, encrypted)
-- **Cloud Relay**: Desktop ↔ Mobile (anywhere, internet required)
-- **Both**: Works simultaneously - sync with desktops locally AND mobile via cloud
+Done! Clipboards stay in sync.
 
 ## How It Works
 
