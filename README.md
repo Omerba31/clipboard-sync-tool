@@ -38,9 +38,14 @@ A cross-platform clipboard synchronization tool that allows seamless clipboard s
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
 
+# Allow script execution (if needed - run PowerShell as Administrator)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 # Run installer (installs both Python and Node.js dependencies)
 .\install.ps1
 ```
+
+**Note:** If you get "cannot be loaded because running scripts is disabled", run the `Set-ExecutionPolicy` command above.
 
 **Mac/Linux:**
 ```bash
