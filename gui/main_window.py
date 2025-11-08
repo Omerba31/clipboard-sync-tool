@@ -7,7 +7,6 @@ Fixed version with all features properly implemented.
 
 import sys
 import os
-import json
 import base64
 import io
 from datetime import datetime
@@ -20,7 +19,6 @@ from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 import qrcode
-from PIL import Image
 import pyperclip
 
 try:

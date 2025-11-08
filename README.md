@@ -50,8 +50,7 @@ python main.py
 ```
 
 **2. First Time Setup**
-- The app will start with sync **paused** by default
-- Click the **"▶ Start Sync"** button to begin monitoring clipboard
+- The app will start with sync **active** by default (automatically monitoring)
 - Your device will appear in the **Devices** tab
 
 **3. Pairing Devices**
@@ -279,19 +278,38 @@ All clipboard data is encrypted before transmission using a hybrid encryption sy
 
 ```
 clipboard-sync-tool/
-├── core/               # Core functionality
-│   ├── encryption.py   # Encryption/decryption
-│   ├── monitor.py      # Clipboard monitoring
-│   ├── network.py      # Network discovery & P2P
-│   └── sync_engine.py  # Main sync orchestration
-├── gui/                # GUI components
-│   ├── main_window.py  # Main application window
-│   ├── simple_gui.py   # Simplified GUI
-│   └── pairing_server.py # HTTP server for mobile pairing
-├── tests/              # Test files
-├── docs/               # Documentation
-├── main.py             # Application entry point
-└── requirements.txt    # Python dependencies
+├── core/                      # Core functionality
+│   ├── __init__.py
+│   ├── encryption.py          # Hybrid encryption (ECC + AES-256-GCM)
+│   ├── monitor.py             # Clipboard monitoring
+│   ├── network.py             # Network discovery & P2P communication
+│   └── sync_engine.py         # Main sync orchestration
+├── gui/                       # GUI components
+│   ├── __init__.py
+│   ├── main_window.py         # Main PyQt6 application window
+│   ├── simple_gui.py          # Simplified fallback GUI
+│   └── pairing_server.py      # HTTP server for mobile pairing
+├── tests/                     # Test files
+│   ├── test_simple.py         # Basic clipboard tests
+│   ├── test_simple_server.py  # HTTP server connectivity test
+│   ├── test_pairing_server.py # Pairing server tests
+│   └── test_http_response.py  # HTTP response verification
+├── docs/                      # Documentation
+│   ├── BUG_FIXES.md           # Bug fixes and solutions
+│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── MOBILE_PAIRING.md      # Mobile pairing guide
+│   ├── MOBILE_TESTING.md      # Testing procedures
+│   └── QUICK_START_MOBILE.md  # Quick mobile setup
+├── storage/                   # Data storage
+│   └── __init__.py
+├── utils/                     # Utility modules
+│   └── __init__.py
+├── logs/                      # Application logs
+├── main.py                    # Application entry point
+├── verify_setup.py            # Environment verification script
+├── requirements.txt           # Python dependencies
+├── SETUP.md                   # Setup guide
+└── README.md                  # This file
 ```
 
 ## Troubleshooting
@@ -438,12 +456,17 @@ python -m pytest tests/
 
 ### Test Simple Server
 ```bash
-python test_simple_server.py
+python tests/test_simple_server.py
 ```
 
 ### Verify Setup
 ```bash
 python verify_setup.py
+```
+
+### Run All Tests
+```bash
+python -m pytest tests/
 ```
 
 ### Development Setup
