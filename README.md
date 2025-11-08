@@ -19,30 +19,70 @@ A cross-platform clipboard synchronization tool that allows seamless clipboard s
 
 ## Requirements
 
+**Desktop App:**
 - Python 3.8+
 - Windows/Linux/macOS
 - Local network connection
 
+**Cloud Relay (Optional, for mobile sync):**
+- Node.js 18+
+- Fly.io account (free tier available)
+
 ## Installation
 
-1. Clone the repository:
+### Option 1: Automated Installation (Recommended)
+
+**Windows (PowerShell):**
+```powershell
+# Clone the repository
+git clone https://github.com/Omerba31/clipboard-sync-tool.git
+cd clipboard-sync-tool
+
+# Run installer (installs both Python and Node.js dependencies)
+.\install.ps1
+```
+
+**Mac/Linux:**
 ```bash
-git clone <your-repo-url>
+# Clone the repository
+git clone https://github.com/Omerba31/clipboard-sync-tool.git
+cd clipboard-sync-tool
+
+# Make installer executable and run
+chmod +x install.sh
+./install.sh
+```
+
+The installer will:
+- ✅ Check for Python and Node.js
+- ✅ Install Python dependencies (desktop app)
+- ✅ Install Node.js dependencies (cloud relay)
+- ✅ Report any missing prerequisites
+
+### Option 2: Manual Installation
+
+**Step 1: Clone the repository**
+```bash
+git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
 ```
 
-2. Create a virtual environment:
+**Step 2: Install Python dependencies (Desktop App)**
 ```bash
+# Optional: Create virtual environment
 python -m venv venv
+venv\Scripts\activate      # Windows
+source venv/bin/activate   # Mac/Linux
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-3. Activate the virtual environment:
-- Windows: `venv\Scripts\activate`
-- Linux/Mac: `source venv/bin/activate`
-
-4. Install dependencies:
+**Step 3: Install Node.js dependencies (Cloud Relay - Optional)**
 ```bash
-pip install -r requirements.txt
+cd cloud-relay
+npm install
+cd ..
 ```
 
 ## Usage
