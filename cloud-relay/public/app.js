@@ -4,6 +4,7 @@ let roomId = null;
 let deviceName = null;
 let deviceId = null;
 let clipboardHistory = [];
+let selectedImage = null; // Store selected image data
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -121,11 +122,42 @@ function loadServerStats() {
         .catch(err => console.error('Failed to load stats:', err));
 }
 
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check file size (limit to 5MB for cloud relay)
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('⚠️ Image too large (max 5MB)', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        selectedImage = e.target.result; // Base64 data URL
+        
+        // Show preview
+        document.getElementById('previewImg').src = selectedImage;
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('clearImageBtn').style.display = 'inline-block';
+        
+        showNotification('✅ Image ready to send');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImage() {
+    selectedImage = null;
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('clearImageBtn').style.display = 'none';
+}
+
 function sendToDesktop() {
     const text = document.getElementById('sendText').value.trim();
     
-    if (!text) {
-        showNotification('⚠️ Please enter some text', 'error');
+    if (!text && !selectedImage) {
+        showNotification('⚠️ Please enter text or choose an image', 'error');
         return;
     }
 
@@ -134,23 +166,46 @@ function sendToDesktop() {
         return;
     }
 
-    // Send to relay (NOTE: In production, this should be encrypted!)
-    socket.emit('clipboard_data', {
-        encrypted_content: btoa(text), // Base64 encode (NOT real encryption!)
-        content_type: 'text',
-        timestamp: Date.now()
-    });
-
-    showNotification('✅ Sent to desktop!');
-    document.getElementById('sendText').value = '';
+    // Send image if selected
+    if (selectedImage) {
+        socket.emit('clipboard_data', {
+            encrypted_content: selectedImage, // Base64 data URL
+            content_type: 'image',
+            timestamp: Date.now()
+        });
+        
+        showNotification('✅ Image sent to desktop!');
+        clearImage();
+    }
+    
+    // Send text if provided
+    if (text) {
+        socket.emit('clipboard_data', {
+            encrypted_content: btoa(text), // Base64 encode
+            content_type: 'text',
+            timestamp: Date.now()
+        });
+        
+        showNotification('✅ Text sent to desktop!');
+        document.getElementById('sendText').value = '';
+    }
 }
 
 function receiveFromDesktop(data) {
-    const content = atob(data.encrypted_content); // Base64 decode
+    const contentType = data.content_type || 'text';
+    let content;
+    
+    // Handle different content types
+    if (contentType === 'image') {
+        content = data.encrypted_content; // Already a data URL
+    } else {
+        content = atob(data.encrypted_content); // Base64 decode text
+    }
     
     // Add to history
     clipboardHistory.unshift({
         content,
+        contentType,
         timestamp: data.timestamp || Date.now(),
         from: data.from_name
     });
@@ -162,7 +217,9 @@ function receiveFromDesktop(data) {
 
     // Update UI
     displayReceivedContent();
-    showNotification(`📥 Received from ${data.from_name}`);
+    
+    const typeEmoji = contentType === 'image' ? '🖼️' : '📝';
+    showNotification(`${typeEmoji} Received from ${data.from_name}`);
 }
 
 function displayReceivedContent() {
@@ -172,21 +229,36 @@ function displayReceivedContent() {
         container.innerHTML = `
             <div class="empty-state">
                 <p>📭 No content received yet</p>
+                <p style="font-size: 0.9em; margin-top: 10px;">Content from your desktop will appear here.<br>Tap to copy to clipboard.</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = clipboardHistory.map(item => {
+    container.innerHTML = clipboardHistory.map((item, index) => {
         const date = new Date(item.timestamp);
-        return `
-            <div class="clipboard-item" onclick="copyToClipboard('${item.content.replace(/'/g, "\\'")}')">
-                <div class="clipboard-item-time">
-                    ${date.toLocaleTimeString()} - from ${item.from}
+        const isImage = item.contentType === 'image';
+        
+        if (isImage) {
+            return `
+                <div class="clipboard-item" onclick="downloadImage(${index})">
+                    <div class="clipboard-item-time">
+                        🖼️ ${date.toLocaleTimeString()} - from ${item.from}
+                    </div>
+                    <img src="${item.content}" class="clipboard-item-image" alt="Clipboard image">
+                    <div style="font-size: 0.8em; color: #666; margin-top: 5px;">Tap to download</div>
                 </div>
-                <div class="clipboard-item-content">${escapeHtml(item.content)}</div>
-            </div>
-        `;
+            `;
+        } else {
+            return `
+                <div class="clipboard-item" onclick="copyToClipboard('${item.content.replace(/'/g, "\\'")}')">
+                    <div class="clipboard-item-time">
+                        📝 ${date.toLocaleTimeString()} - from ${item.from}
+                    </div>
+                    <div class="clipboard-item-content">${escapeHtml(item.content)}</div>
+                </div>
+            `;
+        }
     }).join('');
 }
 
@@ -203,6 +275,21 @@ function copyToClipboard(text) {
         document.body.removeChild(textarea);
         showNotification('✅ Copied to clipboard!');
     });
+}
+
+function downloadImage(index) {
+    const item = clipboardHistory[index];
+    if (!item || item.contentType !== 'image') return;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = item.content;
+    link.download = `clipboard-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('✅ Image downloaded!');
 }
 
 function updateDevicesList(devices) {

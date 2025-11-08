@@ -447,9 +447,52 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
         
-        # Cloud relay status
-        cloud_info = QLabel("💡 Cloud Relay: Use the '☁️ Cloud Relay' button in header to connect to mobile devices.\nLocal P2P: Devices on the same WiFi will appear below.")
-        cloud_info.setStyleSheet("""
+        # Cloud relay status card
+        self.cloud_status_card = QWidget()
+        self.cloud_status_card.setStyleSheet("""
+            QWidget {
+                background-color: #FFF3E0;
+                border-radius: 6px;
+                margin-bottom: 10px;
+            }
+        """)
+        cloud_card_layout = QVBoxLayout()
+        cloud_card_layout.setContentsMargins(12, 12, 12, 12)
+        
+        self.cloud_status_label = QLabel("☁️ Cloud Relay: Not connected")
+        self.cloud_status_label.setStyleSheet("font-weight: bold; color: #E65100;")
+        cloud_card_layout.addWidget(self.cloud_status_label)
+        
+        self.cloud_details_label = QLabel("Click '☁️ Cloud Relay' button to connect to mobile devices")
+        self.cloud_details_label.setStyleSheet("color: #666; font-size: 11px;")
+        self.cloud_details_label.setWordWrap(True)
+        cloud_card_layout.addWidget(self.cloud_details_label)
+        
+        # Test button (hidden by default)
+        self.cloud_test_btn = QPushButton("📤 Test Sync")
+        self.cloud_test_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        self.cloud_test_btn.clicked.connect(self.test_cloud_sync)
+        self.cloud_test_btn.setVisible(False)
+        cloud_card_layout.addWidget(self.cloud_test_btn)
+        
+        self.cloud_status_card.setLayout(cloud_card_layout)
+        layout.addWidget(self.cloud_status_card)
+        
+        # Info label
+        info_label = QLabel("💡 Local P2P: Devices on the same WiFi will appear below")
+        info_label.setStyleSheet("""
             QLabel {
                 background-color: #E3F2FD;
                 color: #1976D2;
@@ -458,8 +501,8 @@ class MainWindow(QMainWindow):
                 margin-bottom: 10px;
             }
         """)
-        cloud_info.setWordWrap(True)
-        layout.addWidget(cloud_info)
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
         
         # Discovered devices (local P2P)
         discovered_group = QGroupBox("Discovered Devices (Local Network)")
@@ -776,6 +819,37 @@ class MainWindow(QMainWindow):
                 devices = self.sync_engine.get_paired_devices()
                 self.device_count_label.setText(f"{len(devices)} devices connected")
                 
+                # Update cloud relay status
+                if self.sync_engine.is_cloud_relay_connected():
+                    self.cloud_status_label.setText("☁️ Cloud Relay: ✅ Connected")
+                    self.cloud_status_label.setStyleSheet("font-weight: bold; color: #2E7D32;")
+                    
+                    # Show connection details
+                    if hasattr(self.sync_engine, 'cloud_relay') and self.sync_engine.cloud_relay:
+                        room_id = self.sync_engine.cloud_relay.room_id
+                        server = self.sync_engine.cloud_relay.server_url
+                        self.cloud_details_label.setText(f"Server: {server}\nRoom: {room_id}\n✅ Syncing with mobile devices")
+                        self.cloud_status_card.setStyleSheet("""
+                            QWidget {
+                                background-color: #E8F5E9;
+                                border-radius: 6px;
+                                margin-bottom: 10px;
+                            }
+                        """)
+                        self.cloud_test_btn.setVisible(True)
+                else:
+                    self.cloud_status_label.setText("☁️ Cloud Relay: Not connected")
+                    self.cloud_status_label.setStyleSheet("font-weight: bold; color: #E65100;")
+                    self.cloud_details_label.setText("Click '☁️ Cloud Relay' button to connect to mobile devices")
+                    self.cloud_status_card.setStyleSheet("""
+                        QWidget {
+                            background-color: #FFF3E0;
+                            border-radius: 6px;
+                            margin-bottom: 10px;
+                        }
+                    """)
+                    self.cloud_test_btn.setVisible(False)
+                
                 # Update devices tab
                 self.update_devices_display()
             except:
@@ -1045,6 +1119,25 @@ class MainWindow(QMainWindow):
         
         dialog.setLayout(layout)
         dialog.exec()
+    
+    def test_cloud_sync(self):
+        """Test cloud relay sync by sending a test message"""
+        if not self.sync_engine or not self.sync_engine.is_cloud_relay_connected():
+            QMessageBox.warning(self, "Not Connected", "Cloud relay is not connected")
+            return
+        
+        import datetime
+        test_message = f"Test sync from desktop at {datetime.datetime.now().strftime('%H:%M:%S')}"
+        
+        try:
+            import pyperclip
+            pyperclip.copy(test_message)
+            QMessageBox.information(self, "Test Sent! 📤", 
+                                  f"Test message copied to clipboard:\n\n"
+                                  f'"{test_message}"\n\n'
+                                  f"It should appear on your mobile device shortly!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to send test: {str(e)}")
     
     def show_cloud_relay(self):
         """Show cloud relay connection dialog"""

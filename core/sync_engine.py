@@ -226,13 +226,20 @@ class SyncEngine:
             
             logger.info(f"Clipboard synced to {len(self.paired_devices)} devices")
         
-        # Send to cloud relay if connected (only text for now)
-        if self.cloud_relay_enabled and clipboard_data.content_type == ContentType.TEXT:
-            text_content = clipboard_data.content if isinstance(clipboard_data.content, str) else str(clipboard_data.content)
-            asyncio.run_coroutine_threadsafe(
-                self._send_to_cloud_relay(text_content, 'text'),
-                self.loop
-            )
+        # Send to cloud relay if connected (text and images)
+        if self.cloud_relay_enabled:
+            if clipboard_data.content_type == ContentType.TEXT:
+                text_content = clipboard_data.content if isinstance(clipboard_data.content, str) else str(clipboard_data.content)
+                asyncio.run_coroutine_threadsafe(
+                    self._send_to_cloud_relay(text_content, 'text'),
+                    self.loop
+                )
+            elif clipboard_data.content_type == ContentType.IMAGE:
+                # Send image data
+                asyncio.run_coroutine_threadsafe(
+                    self._send_to_cloud_relay(content_bytes, 'image'),
+                    self.loop
+                )
     
     def _on_device_discovered(self, device: Device):
         """Handle new device discovery"""
@@ -500,7 +507,57 @@ class SyncEngine:
             # Update local clipboard
             if data_type == 'text':
                 pyperclip.copy(content)
-                logger.info("✅ Clipboard updated from cloud relay")
+                logger.info("✅ Text clipboard updated from cloud relay")
+            elif data_type == 'image':
+                # Handle image data
+                try:
+                    from PIL import Image
+                    import io
+                    
+                    # Remove data URL prefix if present
+                    if content.startswith('data:image'):
+                        content = content.split(',')[1]
+                    
+                    # Decode base64 image
+                    img_data = base64.b64decode(content)
+                    img = Image.open(io.BytesIO(img_data))
+                    
+                    # Copy to clipboard (Windows)
+                    import win32clipboard
+                    from io import BytesIO
+                    
+                    output = BytesIO()
+                    img.convert('RGB').save(output, 'BMP')
+                    data = output.getvalue()[14:]  # Remove BMP header
+                    output.close()
+                    
+                    win32clipboard.OpenClipboard()
+                    win32clipboard.EmptyClipboard()
+                    win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+                    win32clipboard.CloseClipboard()
+                    
+                    logger.info("✅ Image clipboard updated from cloud relay")
+                except ImportError:
+                    logger.warning("PIL or win32clipboard not available, saving image to file instead")
+                    # Fallback: save to file
+                    import tempfile
+                    import os
+                    from datetime import datetime
+                    
+                    if content.startswith('data:image'):
+                        content = content.split(',')[1]
+                    
+                    img_data = base64.b64decode(content)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = f"clipboard_image_{timestamp}.png"
+                    filepath = os.path.join(tempfile.gettempdir(), filename)
+                    
+                    with open(filepath, 'wb') as f:
+                        f.write(img_data)
+                    
+                    logger.info(f"✅ Image saved to: {filepath}")
+                except Exception as img_err:
+                    logger.error(f"Error processing image: {img_err}")
             
             # Clear incoming after a moment
             def clear_incoming():
@@ -512,6 +569,8 @@ class SyncEngine:
             
         except Exception as e:
             logger.error(f"Error processing cloud clipboard: {e}")
+            import traceback
+            traceback.print_exc()
     
     async def _send_to_cloud_relay(self, content: str, content_type: str):
         """Send clipboard data to cloud relay"""

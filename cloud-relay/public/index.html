@@ -137,6 +137,19 @@
             border-radius: 10px;
             margin-bottom: 10px;
             border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clipboard-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .clipboard-item:active {
+            transform: translateX(3px);
+            background: #dee2e6;
         }
 
         .clipboard-item-time {
@@ -150,6 +163,56 @@
             white-space: pre-wrap;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
+        }
+
+        .clipboard-item-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .file-input-label:hover {
+            background: #e0e0e0;
+        }
+
+        .clear-image-btn {
+            margin-left: 10px;
+            padding: 8px 16px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
         }
 
         .empty-state {
@@ -267,16 +330,27 @@
         </div>
 
         <div class="card">
-            <h2>✍️ Send to Desktop</h2>
-            <textarea id="sendText" placeholder="Paste content here to send to your desktop..."></textarea>
+            <h2>📤 Send to Desktop</h2>
+            <textarea id="sendText" placeholder="Type or paste content here, then tap 'Send'..."></textarea>
+            
+            <div class="file-input-wrapper">
+                <input type="file" id="imageInput" accept="image/*" onchange="handleImageSelect(event)">
+                <label for="imageInput" class="file-input-label">📷 Choose Image</label>
+                <button id="clearImageBtn" class="clear-image-btn" style="display: none;" onclick="clearImage()">✕ Clear</button>
+            </div>
+            
+            <div id="imagePreview" style="display: none;">
+                <img id="previewImg" class="image-preview" alt="Preview">
+            </div>
+            
             <button class="button button-primary" onclick="sendToDesktop()">📤 Send to Desktop</button>
         </div>
 
         <div class="card">
-            <h2>📥 Received from Desktop</h2>
+            <h2>📥 From Desktop</h2>
             <div id="receivedContent" class="empty-state">
-                <p>📭 No content received yet</p>
-                <p style="font-size: 0.9em; margin-top: 10px;">Content from your desktop will appear here</p>
+                <p>📭 No content yet</p>
+                <p style="font-size: 0.9em; margin-top: 10px;">Content from your desktop will appear here.<br>Tap to copy to clipboard.</p>
             </div>
         </div>
 

@@ -4,6 +4,7 @@ Cloud Relay Client - Connects desktop app to cloud relay server for mobile sync
 
 import asyncio
 import base64
+from datetime import datetime
 from typing import Optional, Callable
 from loguru import logger
 import socketio
@@ -164,12 +165,12 @@ class CloudRelayClient:
         except Exception as e:
             logger.error(f"Error disconnecting: {e}")
     
-    async def send_clipboard(self, content: str, data_type: str = 'text'):
+    async def send_clipboard(self, content, data_type: str = 'text'):
         """
         Send clipboard data to cloud relay
         
         Args:
-            content: Clipboard content to send
+            content: Clipboard content to send (str for text, bytes for image)
             data_type: Type of data ('text', 'image', etc.)
         """
         if not self.connected:
@@ -177,23 +178,42 @@ class CloudRelayClient:
             return False
         
         try:
-            # Encode text as base64
+            # Encode content based on type
             if data_type == 'text':
-                content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8')
+                encoded_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+            elif data_type == 'image':
+                # Image is already bytes, encode to base64
+                if isinstance(content, bytes):
+                    # Convert to data URL format
+                    import io
+                    from PIL import Image
+                    img = Image.open(io.BytesIO(content))
+                    buffered = io.BytesIO()
+                    img.save(buffered, format="PNG")
+                    img_bytes = buffered.getvalue()
+                    encoded_content = f"data:image/png;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
+                else:
+                    encoded_content = content
+            else:
+                logger.warning(f"Unsupported data type: {data_type}")
+                return False
             
             # Send to server
             await self.sio.emit('clipboard_data', {
-                'room_id': self.room_id,
-                'device_id': self.device_id,
-                'data': content,
-                'type': data_type
+                'encrypted_content': encoded_content,
+                'content_type': data_type,
+                'timestamp': int(datetime.now().timestamp() * 1000)
             })
             
-            logger.info(f"Sent clipboard to cloud relay: {data_type} ({len(content)} bytes)")
+            logger.info(f"Sent clipboard to cloud relay: {data_type} ({len(str(encoded_content))} chars)")
             return True
             
         except Exception as e:
             logger.error(f"Failed to send clipboard: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def is_connected(self) -> bool:

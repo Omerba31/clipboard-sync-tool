@@ -1,81 +1,114 @@
 # 📋 Clipboard Sync Tool
 
-Sync your clipboard between **desktop computers** and **mobile devices** - works locally or over the internet!
-
-## ⚡ Quick Start
-
-### 1️⃣ Install (Desktop)
-
-```bash
-# Clone and install
-git clone https://github.com/Omerba31/clipboard-sync-tool.git
-cd clipboard-sync-tool
-pip install -r requirements.txt
-
-# Run the app
-python main.py
-```
-
-### 2️⃣ Sync with Mobile
-
-**Option A: Use the public cloud relay (easiest)**
-1. Desktop: Click **"☁️ Cloud Relay"** → Enter:
-   - URL: `https://clipboard-sync-tool.fly.dev`
-   - Room ID: `your-room-name`
-2. Mobile: Open `https://clipboard-sync-tool.fly.dev` → Enter same Room ID
-3. Done! Copy/paste on either device
-
-**Option B: Deploy your own cloud relay (FREE)**
-```bash
-.\deploy-cloud-relay.ps1  # Windows
-./deploy-cloud-relay.sh   # Mac/Linux
-```
-Then use your own Fly.io URL instead.
-
-### 3️⃣ Sync Desktop-to-Desktop (same WiFi)
-
-1. Computer 1: Click **"📱 Local P2P"** → Show QR
-2. Computer 2: Click **"� Local P2P"** → Enter QR Data → Paste → Pair
-3. Done! Clipboards stay in sync
-
----
+**Sync your clipboard seamlessly between desktop and mobile devices** - copy on one device, paste on another instantly!
 
 ## ✨ Features
 
-- 🚀 **Instant sync** - Copy on one device, paste on another
-- 📱 **Mobile support** - Works on iPhone, Android (via web app)
-- 🌐 **Works anywhere** - Cloud relay doesn't require same network
-- 🔒 **Secure** - End-to-end encryption for local P2P
-- 🎨 **Beautiful UI** - Modern interface with dark mode support
-
-> 💡 **Having issues?** Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for quick fixes!
-
-## 📦 Requirements
-
-- Python 3.8+ (desktop app)
-- Node.js 18+ (only if deploying your own cloud relay)
+- 🔄 **Bidirectional Sync** - Copy/paste works in BOTH directions (desktop ↔ mobile)
+- 🚀 **Instant Transfer** - Changes appear immediately on all connected devices
+- 📱 **Mobile Support** - Full clipboard sync on iPhone, Android (web app)
+- 🌐 **Works Anywhere** - Cloud relay doesn't require same Wi-Fi network
+- 🖥️ **Desktop-to-Desktop** - Local P2P sync on the same network
+- 🔒 **Secure** - End-to-end encryption for local P2P mode
+- 🎨 **Beautiful UI** - Modern desktop app with real-time status
 
 ---
 
-## 🔧 Advanced Setup
+## ⚡ Quick Start
 
-### Manual Installation
+### 1️⃣ Install Desktop App
 
 ```bash
-# Clone repo
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run
 python main.py
 ```
 
-### Deploy Your Own Cloud Relay (Optional)
+### 2️⃣ Connect Mobile Device
 
-**Why?** Host your own relay server on Fly.io (FREE 160GB/month)
+**🌐 Cloud Relay (Recommended - Works Anywhere)**
+
+1. **Desktop**: Click **☁️ Cloud Relay** button
+   - Enter URL: `https://clipboard-sync-tool.fly.dev`
+   - Enter Room ID: `your-unique-room-name`
+   - Click Connect
+
+2. **Mobile**: Open `https://clipboard-sync-tool.fly.dev` in browser
+   - Enter same Room ID
+   - Enter device name (e.g., "iPhone")
+   - Click Connect
+
+3. **Done!** Now you can:
+   - ✅ Copy on desktop → Tap item on mobile to paste
+   - ✅ Type on mobile → Send to desktop clipboard
+   - ✅ See all synced items in history
+
+### 3️⃣ Desktop-to-Desktop (Same Wi-Fi)
+
+**📱 Local P2P Mode**
+
+1. **Computer 1**: Click **📱 Local P2P** → Show QR code
+2. **Computer 2**: Click **📱 Local P2P** → Enter QR Data tab → Paste data → Pair
+3. **Done!** Clipboards stay in sync with end-to-end encryption
+
+---
+
+## 📖 How to Use
+
+### Mobile Web App Features
+
+**Sending to Desktop:**
+1. On mobile, type or paste content in the text box
+2. OR tap **📷 Choose Image** to select a photo
+3. Tap **📤 Send to Desktop**
+4. Content instantly appears in your desktop clipboard
+5. Paste anywhere (Ctrl+V / Cmd+V)
+
+**Receiving from Desktop:**
+1. Copy anything on your desktop (text or images)
+2. Content appears in **📥 From Desktop** section on mobile
+3. **Tap text items** to copy to clipboard
+4. **Tap image items** to download to your device
+5. Paste in any app
+
+**View Connected Devices:**
+- See all devices synced to the same Room ID
+- Desktop and other mobile devices shown with icons
+
+### Desktop App Features
+
+**Dashboard Tab:**
+- View total syncs, active devices, and recent activity
+- Real-time statistics
+
+**History Tab:**
+- 📜 View all synced clipboard items
+- 🔍 Search by content
+- 🏷️ Filter by type (Text, Images, URLs, Code)
+- 📋 Click any item to copy it back to clipboard
+
+**Devices Tab:**
+- ☁️ **Cloud Relay Status** - Shows connection state with visual feedback
+  - 🟢 Green = Connected to cloud relay
+  - 🟠 Orange = Not connected
+  - Shows server URL and Room ID when connected
+  - **📤 Test Sync** button to verify connection
+- 💡 **Local P2P** - Discover devices on same network
+  - Shows discovered and paired devices
+  - Connect for encrypted P2P sync
+
+**Settings Tab:**
+- Configure auto-sync behavior
+- Choose content types to sync
+- Set size limits
+- Customize device name
+
+---
+
+## 🚀 Deploy Your Own Cloud Relay (Optional)
+
+Want to host your own relay server? It's **FREE** on Fly.io!
 
 **Windows:**
 ```powershell
@@ -92,404 +125,248 @@ The script will:
 - ✅ Install Fly CLI
 - ✅ Authenticate with Fly.io
 - ✅ Deploy your cloud relay
-- ✅ Give you your app URL
+- ✅ Give you your custom URL
 
-Then use your URL instead of the public one!
+Then use your own URL instead of the public one!
 
-#### Option B: Manual QR Data Entry (For Desktop-to-Desktop)
-1. On Device A: Click **"Show QR"** → Copy the QR data text
-2. On Device B: Click **"Enter QR Data"** tab → Paste the QR data
-3. Click **"Pair"**
-4. Devices are now connected!
+> 💡 **Fly.io Free Tier**: 160GB bandwidth/month, plenty for clipboard sync
 
-**4. Using Clipboard Sync**
-- Copy anything on one device (text, image, file, etc.)
-- It automatically appears on all paired devices
-- View history in the **"History"** tab
-- Filter by type using the dropdown menu
-- Search for specific content using the search box
+---
 
-### Main Window Interface
+## 🔐 Security & Privacy
 
-**History Tab**
-- 📝 View all clipboard items with icons (📝 text, 🖼️ image, 📁 file, 🔗 URL, etc.)
-- 🔍 Search bar - Find specific clipboard items
-- 🏷️ Filter dropdown - Filter by content type
-- 🗑️ Clear History - Remove all items
-- Click any item to copy it back to clipboard
+### Cloud Relay Mode
+- ⚠️ Content is Base64 encoded (NOT encrypted) for cloud relay
+- 🔒 Use Room IDs that others can't guess
+- 📝 Don't use for sensitive data (passwords, keys, etc.)
+- ✅ Perfect for: notes, links, code snippets, general text
 
-**Devices Tab**
-- 📱 Show QR - Generate QR code for mobile pairing
-- 👥 Device list - See all paired devices and their status
-- 🟢 Green = Connected | 🟡 Yellow = Pairing | ⚪ Gray = Offline
-- Each device shows: Name, IP address, and last seen time
+### Local P2P Mode (Desktop-to-Desktop)
+- ✅ **Full End-to-End Encryption**
+- 🔐 ECC (Elliptic Curve) key exchange
+- 🔒 AES-256-GCM content encryption
+- ✅ Forward secrecy (unique key per message)
+- 🛡️ Digital signatures verify authenticity
+- 🏠 Data never leaves your local network
 
-**Controls**
-- ▶️ Start Sync / ⏸️ Pause Sync - Toggle clipboard monitoring
-- Status indicator shows current state
-
-### Desktop-to-Desktop Pairing
-
-**Computer 1:**
-```bash
-python main.py
-# Click "Show QR" → Copy the QR data text (long base64 string)
+**Encryption Flow:**
+```
+1. Pairing: Exchange public keys via QR code
+2. Sending: Encrypt with AES-256, wrap key with ECDH
+3. Receiving: Decrypt key with ECDH, decrypt content
+4. Verify: Check GCM authentication tag
 ```
 
-**Computer 2:**
-```bash
-python main.py  
-# Click "📱 Local P2P" → "Enter QR Data" tab → Paste → Pair
-```
+> 🔒 **Privacy First**: Local P2P data never touches any server!
 
-Done! Clipboards stay in sync.
+---
 
-## How It Works
+## 🏗️ Architecture
 
-### System Flow
+### Tech Stack
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    CLIPBOARD SYNC FLOW                       │
-└─────────────────────────────────────────────────────────────┘
+**Desktop App:**
+- **PyQt6** - Modern cross-platform GUI
+- **Python-SocketIO** - WebSocket communication
+- **Cryptography** - Industry-standard encryption
+- **Zeroconf** - mDNS service discovery
+- **Pyperclip** - Cross-platform clipboard access
 
-1. APPLICATION START
-   ├─ Generate ECC keypair (SECP384R1)
-   ├─ Start clipboard monitoring
-   ├─ Start mDNS service discovery (Zeroconf)
-   ├─ Start P2P server (SocketIO)
-   └─ Start mobile pairing server (HTTP:8080)
+**Cloud Relay:**
+- **Node.js 18** - Server runtime
+- **Socket.IO 4.6** - Real-time bidirectional sync
+- **Express** - HTTP server
+- **Fly.io** - Free hosting platform
 
-2. DEVICE DISCOVERY (Automatic)
-   ├─ Broadcast mDNS service "clipboard-sync._tcp"
-   ├─ Listen for other devices on network
-   └─ Display discovered devices in UI
+**Mobile Web App:**
+- **Progressive Web App (PWA)** - Install to home screen
+- **Socket.IO Client** - Real-time connection
+- **Vanilla JavaScript** - No frameworks, fast & simple
+- **Responsive CSS** - Works on all screen sizes
 
-3. DEVICE PAIRING
-   ├─ Generate QR code with pairing data
-   ├─ Exchange public keys (ECC)
-   ├─ Store peer's public key
-   └─ Device marked as "Paired"
-
-4. CLIPBOARD MONITORING
-   ├─ Watch system clipboard for changes
-   ├─ Detect content type (text/image/file/url)
-   ├─ Add to local history
-   └─ Trigger sync to paired devices
-
-5. CONTENT ENCRYPTION
-   ├─ Generate random AES-256 key
-   ├─ Compress content if beneficial
-   ├─ Encrypt with AES-256-GCM
-   ├─ Encrypt AES key for each peer (ECDH + ChaCha20)
-   └─ Create encrypted bundle
-
-6. TRANSMISSION
-   ├─ Send via SocketIO (WebSocket)
-   ├─ Peer receives encrypted bundle
-   ├─ Automatic retry on failure
-   └─ Acknowledge receipt
-
-7. DECRYPTION & DISPLAY
-   ├─ Derive shared key (ECDH)
-   ├─ Decrypt AES key (ChaCha20)
-   ├─ Decrypt content (AES-256-GCM)
-   ├─ Verify authenticity (GCM tag)
-   ├─ Decompress if needed
-   ├─ Add to clipboard
-   └─ Show in history
-```
-
-### Network Communication
-
-**Ports Used:**
-- `8080` - Mobile pairing HTTP server (temporary during pairing)
-- `5353` - mDNS service discovery (UDP)
-- `Dynamic` - P2P communication (SocketIO assigns random port)
-
-**Protocols:**
-- **mDNS** - Automatic device discovery (no configuration needed)
-- **HTTP** - Mobile pairing web interface
-- **WebSocket** - Real-time P2P data transfer (via SocketIO)
-- **TCP** - Reliable delivery of clipboard data
-
-## Network Requirements
-
-⚠️ **Important**: Devices must be on the same local network without VPN interference.
-
-**Requirements:**
-- ✅ All devices on the **same Wi-Fi network**
-- ✅ No VPN blocking local traffic (or VPN with local network access enabled)
-- ✅ Firewall allowing Python/app network access
-- ✅ Ports 8080 (pairing), 5353 (mDNS), and dynamic P2P ports not blocked
-
-**Common Network Issues:**
-- If using VPN (like Harmony SASE), add your Wi-Fi network to trusted networks
-- Or temporarily disconnect VPN while using clipboard sync
-- Corporate networks may block mDNS - use manual pairing instead
-- Some routers have "Client Isolation" - disable it in router settings
-
-## Security & Encryption
-
-### 🔐 End-to-End Encryption
-
-All clipboard data is encrypted before transmission using a hybrid encryption system:
-
-**Encryption Methods:**
-- **ECC (Elliptic Curve Cryptography)** - SECP384R1 curve for key exchange
-- **AES-256-GCM** - For content encryption (industry standard)
-- **ChaCha20-Poly1305** - For encrypting symmetric keys
-- **ECDSA** - Digital signatures for content verification
-
-**How It Works:**
-```
-1. Device Pairing
-   ├─ Each device generates ECC keypair (private + public)
-   ├─ Public keys exchanged during pairing (QR code or manual)
-   └─ Private keys NEVER leave the device
-
-2. Sending Clipboard Data
-   ├─ Generate random AES-256 key (unique per message)
-   ├─ Encrypt content with AES-256-GCM
-   ├─ Derive shared secret using ECDH (your private + peer's public)
-   ├─ Encrypt AES key with ChaCha20-Poly1305
-   └─ Send encrypted bundle over network
-
-3. Receiving Clipboard Data
-   ├─ Derive same shared secret using ECDH
-   ├─ Decrypt AES key using ChaCha20-Poly1305
-   ├─ Decrypt content using AES-256-GCM
-   └─ Verify authenticity with GCM authentication tag
-```
-
-**Security Features:**
-- ✅ **End-to-End Encrypted** - Only paired devices can decrypt
-- ✅ **Forward Secrecy** - New encryption key for each clipboard item
-- ✅ **Authenticated Encryption** - GCM mode prevents tampering
-- ✅ **Digital Signatures** - Verify content integrity (ECDSA)
-- ✅ **Compression** - Automatic compression for text content
-- ✅ **Multi-Peer Support** - Can encrypt for multiple devices simultaneously
-
-**What's NOT Encrypted:**
-- ❌ Mobile pairing page (HTTP) - Only shows during initial setup
-- ❌ QR code content - Only contains IP address and port
-- ❌ Device discovery (mDNS) - Service announcement broadcasts
-
-**Note:** Once devices are paired, ALL clipboard data transfer is fully encrypted!
-
-## Architecture
-
-- **PyQt6** - Modern GUI framework for desktop interface
-- **Zeroconf** - mDNS service discovery for automatic device detection
-- **python-socketio** - WebSocket-based P2P communication
-- **Cryptography** - Industry-standard encryption library (ECC, AES, ChaCha20)
-- **HTTP Server** - Lightweight server for mobile device pairing
-
-## Project Structure
+### Project Structure
 
 ```
 clipboard-sync-tool/
-├── core/                      # Core functionality
-│   ├── __init__.py
-│   ├── encryption.py          # Hybrid encryption (ECC + AES-256-GCM)
-│   ├── monitor.py             # Clipboard monitoring
-│   ├── network.py             # Network discovery & P2P communication
-│   └── sync_engine.py         # Main sync orchestration
-├── gui/                       # GUI components
-│   ├── __init__.py
-│   ├── main_window.py         # Main PyQt6 application window
-│   ├── simple_gui.py          # Simplified fallback GUI
-│   └── pairing_server.py      # HTTP server for mobile pairing
-├── cloud-relay/               # Cloud relay server for mobile sync
-│   ├── server.js              # Node.js relay server (Socket.IO)
-│   ├── package.json           # Node.js dependencies
-│   ├── Dockerfile             # Container for Fly.io deployment
-│   ├── fly.toml               # Fly.io configuration
+├── core/                          # Core functionality
+│   ├── encryption.py              # ECC + AES-256-GCM encryption
+│   ├── monitor.py                 # Clipboard monitoring
+│   ├── network.py                 # P2P networking & discovery
+│   ├── sync_engine.py             # Sync orchestration
+│   └── cloud_relay_client.py      # Cloud relay Socket.IO client
+├── gui/                           # Desktop GUI
+│   ├── main_window.py             # Main application window
+│   └── pairing_server.py          # HTTP server for P2P QR pairing
+├── cloud-relay/                   # Cloud relay server
+│   ├── server.js                  # Node.js relay (Socket.IO)
 │   ├── public/
-│   │   ├── index.html         # Mobile PWA interface
-│   │   └── app.js             # Mobile app JavaScript
-│   └── README.md              # Deployment & usage guide
-├── tests/                     # Test files
-│   ├── test_simple.py         # Basic clipboard tests
-│   ├── test_simple_server.py  # HTTP server connectivity test
-│   ├── test_pairing_server.py # Pairing server tests
-│   └── test_http_response.py  # HTTP response verification
-├── docs/                      # Documentation
-│   ├── BUG_FIXES.md           # Bug fixes and solutions
-│   ├── IMPLEMENTATION_SUMMARY.md
-│   ├── MOBILE_PAIRING.md      # Mobile pairing guide
-│   ├── MOBILE_TESTING.md      # Testing procedures
-│   └── QUICK_START_MOBILE.md  # Quick mobile setup
-├── storage/                   # Data storage
-│   └── __init__.py
-├── utils/                     # Utility modules
-│   └── __init__.py
-├── logs/                      # Application logs
-├── main.py                    # Application entry point
-├── verify_setup.py            # Environment verification script
-├── requirements.txt           # Python dependencies
-├── SETUP.md                   # Setup guide
-└── README.md                  # This file
+│   │   ├── index.html             # Mobile PWA UI
+│   │   ├── app.js                 # Mobile app logic
+│   │   └── manifest.json          # PWA manifest
+│   ├── Dockerfile                 # Container for deployment
+│   ├── fly.toml                   # Fly.io config
+│   ├── package.json               # Node dependencies
+│   └── README.md                  # Deployment guide
+├── tests/                         # Organized test suite
+│   ├── unit/                      # Unit tests
+│   │   └── test_clipboard.py      # Clipboard functionality tests
+│   ├── integration/               # Integration tests
+│   │   ├── test_pairing_server.py # P2P pairing tests
+│   │   ├── test_simple_server.py  # HTTP server tests
+│   │   └── test_http_response.py  # HTTP verification
+│   └── README.md                  # Test documentation
+├── docs/                          # Additional documentation
+│   └── MOBILE_PAIRING.md          # Legacy P2P pairing guide
+├── logs/                          # Application logs
+├── deploy-cloud-relay.ps1         # Windows deployment script
+├── deploy-cloud-relay.sh          # Mac/Linux deployment script
+├── install.ps1                    # Windows install script
+├── install.sh                     # Mac/Linux install script
+├── main.py                        # Application entry point
+├── requirements.txt               # Python dependencies
+├── verify_setup.py                # Environment verification
+├── TROUBLESHOOTING.md             # Common issues & solutions
+└── README.md                      # This file
 ```
 
-## Troubleshooting
+---
 
-### Mobile Device Can't Connect
+## 🐛 Troubleshooting
 
-**Problem:** Mobile browser shows "Can't reach this page" or downloads empty file
+### Cloud Relay Connection Issues
 
-**Solutions:**
-1. **VPN Issue (Most Common)**
-   - Disconnect VPN completely
-   - OR add your home/office Wi-Fi to VPN's trusted networks
-   - Check VPN settings for "Allow Local Network Access"
+**Desktop says "Connected" but mobile doesn't work:**
+- Refresh mobile browser
+- Check Room ID matches exactly
+- Try Test Sync button on desktop
+- Check browser console for errors (F12)
 
-2. **Network Issues**
-   - Ensure mobile and desktop on SAME Wi-Fi network
-   - Don't use mobile data or different network
-   - Restart router if needed
+**Mobile can't load the URL:**
+- Verify URL is correct: `https://clipboard-sync-tool.fly.dev`
+- Check mobile has internet connection
+- Try different browser (Safari, Chrome, Firefox)
+- Clear browser cache
 
-3. **Firewall Blocking**
-   - Windows: Allow Python through Windows Firewall
-   - Check antivirus software isn't blocking connections
-   - Temporarily disable firewall to test (then re-enable with exception)
+**"Already connected" error:**
+- Close and reopen desktop app
+- Refresh mobile browser
+- App auto-reconnects now
 
-4. **Wrong IP Address**
-   - IP address in QR code must be your computer's local IP
-   - Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to verify
-   - IP should be like `192.168.x.x` or `10.x.x.x`
+### Mobile Sync Not Working
 
-**Testing Connection:**
+**Copied on desktop, nothing on mobile:**
+- Check cloud relay status card is green on desktop
+- Click Test Sync button - test message should appear on mobile
+- Verify both devices use same Room ID
+- Check desktop clipboard has text content (images not supported in cloud relay yet)
+
+**Tap item on mobile but nothing copies:**
+- Some browsers need HTTPS for clipboard API
+- Try selecting and copying text manually
+- Make sure item loaded fully (not loading spinner)
+
+### Local P2P Issues
+
+**Devices can't discover each other:**
+- Ensure both on same Wi-Fi network
+- Disable VPN or add network to trusted
+- Check firewall allows Python
+- Try manual QR pairing instead of auto-discovery
+
+**Pairing fails:**
+- Copy QR data carefully (entire JSON)
+- Check no extra spaces/characters
+- Restart both apps and try again
+
+### Desktop App Issues
+
+**App won't start:**
 ```bash
-# Test if server is accessible
-python test_simple_server.py
-# Then access from mobile: http://YOUR-IP:8888/
+# Reinstall dependencies
+pip install -r requirements.txt --force-reinstall
+
+# Check Python version (need 3.8+)
+python --version
 ```
 
-### Clipboard Not Syncing
+**GUI freezes:**
+- Fixed in latest version
+- Update to latest code: `git pull`
+- Restart application
 
-**Problem:** Copy/paste not appearing on other devices
+### Performance
 
-**Solutions:**
-1. **Sync Not Started**
-   - Click **"▶ Start Sync"** button
-   - Should show "Sync engine started successfully"
+**Slow sync:**
+- Large files take time (encryption overhead)
+- Cloud relay has 150MB/month bandwidth limit on free tier
+- Local P2P is faster for large content
 
-2. **Devices Not Paired**
-   - Check Devices tab - devices should be listed
-   - Status should be green (connected)
-   - Re-pair if needed
-
-3. **Network Discovery Failed**
-   - Restart the application
-   - Check both devices on same network
-   - Firewall might be blocking mDNS (port 5353)
-
-4. **Encryption Key Mismatch**
-   - Re-pair the devices
-   - Delete old pairing data and start fresh
-
-### Application Won't Start
-
-**Problem:** Python errors when launching
-
-**Solutions:**
-1. **Missing Dependencies**
-   ```bash
-   pip install -r requirements.txt --force-reinstall
-   ```
-
-2. **Python Version**
-   - Check: `python --version` (need 3.8+)
-   - Update Python if needed
-
-3. **Virtual Environment**
-   - Make sure venv is activated: `(venv)` in prompt
-   - Recreate if corrupted: `python -m venv venv --clear`
-
-### Performance Issues
-
-**Slow Sync:**
-- Large files take time (they're encrypted)
-- Check network speed
-- Too many clipboard items in history (clear old ones)
-
-**High CPU Usage:**
-- Normal during file transfers
-- Encryption/decryption is CPU-intensive
+**High CPU:**
+- Normal during encryption/decryption
 - Pause sync when not needed
+- Close other heavy applications
 
-### Common Error Messages
+---
 
-| Error | Solution |
-|-------|----------|
-| `EventLoopBlocked` | Restart application - fixed in latest version |
-| `Port already in use` | Another instance running - close it first |
-| `No public key for device` | Re-pair devices - encryption keys lost |
-| `Failed to start pairing server` | Port 8080 in use - close other apps |
-| `Zeroconf timeout` | Network discovery blocked - check firewall |
+## ❓ FAQ
 
-## FAQ
+**Q: Can mobile devices send clipboard content to desktop?**  
+**A: YES!** Mobile web app has full bidirectional sync. You can type on mobile and send to desktop, or receive desktop clipboard on mobile.
 
-**Q: Is my clipboard data sent to the cloud?**  
-A: No! All data transfers happen directly between your devices on your local network. Nothing is sent to any server or cloud service.
+**Q: Does it work without internet?**  
+A: Local P2P mode works offline (same Wi-Fi). Cloud relay requires internet.
 
-**Q: Can someone intercept my clipboard data?**  
-A: Very unlikely. All data is encrypted with AES-256-GCM before transmission. Even if intercepted, it's useless without the private keys that never leave your devices.
+**Q: Is my data sent to the cloud?**  
+A: Only if using cloud relay. Local P2P mode keeps data on your network only.
+
+**Q: Can someone intercept my clipboard?**  
+A: Local P2P: No, fully encrypted. Cloud relay: Use unique Room IDs and don't share sensitive data.
 
 **Q: How many devices can I sync?**  
-A: Unlimited! You can pair as many devices as you want. The encryption system supports multi-peer communication.
+A: Unlimited! Any device with the same Room ID joins the sync.
 
-**Q: Does it work over the internet?**  
-A: Yes! Use the cloud relay server. See [cloud-relay/README.md](cloud-relay/README.md) for setup. Local P2P mode requires same network.
+**Q: Does it work on iPhone/Android?**  
+A: Yes! Open the cloud relay URL in any mobile browser. Works as a PWA (can install to home screen).
 
-**Q: What happens if I copy a large file?**  
-A: It will sync, but may take time depending on file size and network speed. Files are compressed and encrypted before transfer.
+**Q: What content types are supported?**  
+A: Cloud relay: Text and images (up to 5MB). Local P2P: Text, images, files, URLs.
 
 **Q: Can I sync between Windows and Mac?**  
-A: Yes! The app is cross-platform (Windows/Mac/Linux). As long as both devices run the Python app, they can sync.
+A: Yes! Desktop app works on Windows, Mac, Linux.
 
-**Q: Why do I need to pair devices?**  
-A: Pairing exchanges encryption keys (public keys). This ensures only your devices can decrypt your clipboard data.
+**Q: Why do I need a Room ID?**  
+A: Room ID keeps your devices separate from others using the same relay server. Choose something unique!
 
 **Q: Will this work on public Wi-Fi?**  
-A: Technically yes, but not recommended. Use your home/office network for security. Public Wi-Fi may have restrictions or isolation between devices.
+A: Cloud relay: Yes. Local P2P: Usually not (devices isolated on public networks).
 
-**Q: Does it sync clipboard history?**  
-A: Yes! All synced items are stored in the History tab. You can click any item to copy it again.
+**Q: Can I use my own relay server?**  
+A: Yes! Deploy to Fly.io (free) with the included scripts. See deploy-cloud-relay.ps1/sh
 
-**Q: Can I exclude certain content from syncing?**  
-A: Not yet, but this could be added as a filter feature in future versions.
+**Q: Does mobile app store clipboard history?**  
+A: Yes! Last 10 items shown in "From Desktop" section. Tap any to copy.
 
-**Q: Is there a mobile app?**  
-A: Yes! Use the cloud relay web app (PWA) - works on iPhone/Android. Deploy to Fly.io (free), then open on mobile browser. See [cloud-relay/README.md](cloud-relay/README.md) for full guide. Can install to home screen like a native app!
+---
 
-**Q: What if my devices have the same name?**  
-A: Each device gets a unique ID automatically. Names are just for display - duplicates won't cause issues.
+## 🛠️ Development
 
-## Development
+### Requirements
+
+- **Desktop**: Python 3.8+
+- **Cloud Relay**: Node.js 18+, Fly.io account (free)
 
 ### Running Tests
+
 ```bash
+# All tests
 python -m pytest tests/
-```
 
-### Test Simple Server
-```bash
-python tests/test_simple_server.py
-```
-
-### Verify Setup
-```bash
-python verify_setup.py
-```
-
-### Run All Tests
-```bash
-python -m pytest tests/
+# Specific test
+python tests/test_pairing_server.py
 ```
 
 ### Development Setup
+
 ```bash
 # Clone repo
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
@@ -497,8 +374,10 @@ cd clipboard-sync-tool
 
 # Create virtual environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1  # Windows
-source venv/bin/activate     # Mac/Linux
+
+# Activate venv
+.\venv\Scripts\Activate.ps1  # Windows PowerShell
+source venv/bin/activate      # Mac/Linux
 
 # Install dependencies
 pip install -r requirements.txt
@@ -507,53 +386,68 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## License
+### Local Cloud Relay Development
 
-[Add your license here]
+```bash
+cd cloud-relay
+npm install
+node server.js
+```
 
-## Contributing
+Then open `http://localhost:3000` on mobile.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
-## Changelog
+## 📚 Additional Documentation
 
-### Version 1.0.0 (Current)
-- ✅ End-to-end encryption (ECC + AES-256-GCM)
-- ✅ Desktop-to-desktop sync
-- ✅ Mobile device pairing via QR code
-- ✅ Automatic device discovery (mDNS)
-- ✅ Clipboard history with search/filter
-- ✅ Multiple content types (text, images, files, URLs)
-- ✅ Modern PyQt6 GUI with emoji icons
-- ✅ Compression for text content
-- ✅ Digital signatures for content verification
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Detailed troubleshooting guide
+- [cloud-relay/README.md](cloud-relay/README.md) - Cloud relay deployment & API
 
-### Roadmap
-- ✅ **Cloud relay for internet-based sync** - DONE! See [cloud-relay/](cloud-relay/)
-- ✅ **Mobile web app (PWA)** - DONE! Works on iOS/Android via cloud relay
-- 🔜 Desktop app integration with cloud relay
-- 🔜 End-to-end encryption for cloud relay (currently Base64 only)
-- 🔜 Native mobile app (iOS/Android) with E2E encryption
-- 🔜 Exclude filters (don't sync passwords, etc.)
-- 🔜 Sync selective clipboard history
+---
+
+## 🗺️ Roadmap
+
+### ✅ Completed
+- ✅ Desktop-to-desktop encrypted sync
+- ✅ Mobile web app (PWA)
+- ✅ Cloud relay for internet-based sync
+- ✅ Bidirectional mobile sync (send & receive)
+- ✅ Image support in cloud relay (up to 5MB)
+- ✅ Clipboard history with tap-to-copy
+- ✅ Visual connection status
+- ✅ Auto-reconnection
+- ✅ Test sync button
+
+### 🔜 Planned
+- 🔜 End-to-end encryption for cloud relay
+- 🔜 File support in cloud relay
 - 🔜 Dark mode
-- 🔜 System tray icon
-- 🔜 Auto-start on boot option
+- 🔜 System tray minimize
+- 🔜 Auto-start on boot
+- 🔜 Content filters (exclude passwords, etc.)
+- 🔜 Native mobile apps (iOS/Android)
 
-## Support
+---
 
-If you encounter issues:
-1. Check the [Troubleshooting](#troubleshooting) section
+## 📄 License
+
+[Add your license]
+
+## 🤝 Contributing
+
+Contributions welcome! Please submit a Pull Request.
+
+## 💬 Support
+
+Having issues?
+1. Check [Troubleshooting](#troubleshooting)
 2. Review [FAQ](#faq)
-3. Open an issue on GitHub with:
-   - Your OS and Python version
-   - Error messages or logs
-   - Steps to reproduce the problem
+3. Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+4. Open a GitHub issue with:
+   - OS and Python version
+   - Error messages/logs
+   - Steps to reproduce
 
-## Acknowledgments
+---
 
-Built with:
-- [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) - GUI framework
-- [Cryptography](https://cryptography.io/) - Encryption library
-- [python-socketio](https://python-socketio.readthedocs.io/) - Real-time communication
-- [Zeroconf](https://github.com/jstasiak/python-zeroconf) - Service discovery
+**Made with ❤️ for seamless clipboard sync**

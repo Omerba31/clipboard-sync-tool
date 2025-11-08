@@ -97,18 +97,14 @@ def run_gui():
         print("[ERROR] PyQt6 not installed. Run: pip install PyQt6")
         return
     
-    # Try to import the main window, fall back to simple GUI if needed
+    # Import the main window
     try:
         from gui.main_window import MainWindow
-        print("[INFO] Loading full-featured GUI...")
+        print("[INFO] Loading GUI...")
     except ImportError as e:
-        print(f"[WARNING] Could not load main_window.py: {e}")
-        try:
-            from gui.simple_gui import SimpleSyncWindow as MainWindow
-            print("[INFO] Loading simple GUI...")
-        except ImportError as e2:
-            print(f"[ERROR] Could not load any GUI: {e2}")
-            return
+        print(f"[ERROR] Could not load main_window.py: {e}")
+        print("[ERROR] Make sure all dependencies are installed: pip install -r requirements.txt")
+        return
     
     app = QApplication(sys.argv)
     app.setApplicationName("Clipboard Sync Tool")
