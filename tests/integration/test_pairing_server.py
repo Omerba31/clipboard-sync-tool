@@ -8,8 +8,8 @@ import os
 import time
 import webbrowser
 
-# Add parent directory to path so we can import gui module
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add parent directory to path so we can import modules
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from gui.pairing_server import PairingServer
 
