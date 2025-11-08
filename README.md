@@ -42,11 +42,13 @@ Then use your own Fly.io URL instead.
 
 ## ✨ Features
 
-- � **Instant sync** - Copy on one device, paste on another
+- 🚀 **Instant sync** - Copy on one device, paste on another
 - 📱 **Mobile support** - Works on iPhone, Android (via web app)
 - 🌐 **Works anywhere** - Cloud relay doesn't require same network
 - 🔒 **Secure** - End-to-end encryption for local P2P
 - 🎨 **Beautiful UI** - Modern interface with dark mode support
+
+> 💡 **Having issues?** Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for quick fixes!
 
 ## 📦 Requirements
 
