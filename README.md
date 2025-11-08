@@ -1,16 +1,21 @@
 # Clipboard Sync Tool
 
-A cross-platform clipboard synchronization tool that allows seamless clipboard sharing between devices on the same network.
+A cross-platform clipboard synchronization tool that allows seamless clipboard sharing between devices.
+
+**Sync Options:**
+- 🖥️ **Desktop ↔ Desktop**: Local P2P on same network with end-to-end encryption
+- 📱 **Desktop ↔ Mobile**: Cloud relay via Fly.io (works anywhere, FREE tier available)
 
 ## Features
 
 - 📋 **Real-time Clipboard Sync** - Automatically sync clipboard content across devices
-- 📱 **Mobile Pairing** - Easy QR code-based pairing for mobile devices
-- 🔒 **Encrypted Transfer** - All clipboard data is encrypted during transfer
+- 📱 **Mobile Support** - Cloud relay for mobile devices (iOS/Android via PWA)
+- 🌐 **Cloud Relay** - Sync anywhere via FREE Fly.io hosting
+- 🔒 **Encrypted Transfer** - All clipboard data is encrypted during transfer (local P2P)
 - 🖼️ **Multiple Content Types** - Support for text, images, files, URLs, and more
 - 🎨 **Modern GUI** - Clean PyQt6-based interface with emoji icons
 - 🔍 **Search & Filter** - Quickly find items in clipboard history
-- 🌐 **Network Discovery** - Automatic device discovery on local network
+- 🌐 **Network Discovery** - Automatic device discovery on local network (desktop-to-desktop)
 
 ## Requirements
 
@@ -117,21 +122,43 @@ Both computers are now synced!
 
 ### Mobile Device Pairing
 
-**Requirements:**
-- Desktop and mobile on same Wi-Fi network
-- No VPN blocking connections (or VPN with local network access)
+#### Cloud Relay (Required for Mobile) 🌐
 
-**Steps:**
-1. Desktop: `python main.py` → Click "Show QR"
-2. Mobile: Scan QR code → Opens pairing page
-3. Mobile: Enter device name → Click "Pair Device"
-4. ✅ Done! Mobile device appears in desktop's device list
+**Why Cloud Relay?**
+Mobile browsers cannot act as P2P servers, so direct local sync isn't possible. The cloud relay bridges desktop ↔ mobile communication.
 
-**Supported Mobile Browsers:**
-- Safari (iOS)
-- Chrome (Android/iOS)
-- Firefox (Android/iOS)
-- Edge (Android/iOS)
+**Features:**
+- ✅ **Bidirectional sync** (mobile ↔ desktop)
+- ✅ **Works anywhere** (no same network required)
+- ✅ **FREE hosting** on Fly.io
+- ✅ **Built-in protection** (won't exceed free tier)
+- ✅ **Mobile PWA** (install as app on home screen)
+- ✅ **Real-time sync** via WebSocket
+
+**Quick Setup:**
+```bash
+# 1. Deploy relay server (one-time setup)
+cd cloud-relay
+fly launch
+fly deploy
+
+# 2. Open on mobile
+https://your-app.fly.dev
+
+# 3. Enter same Room ID on desktop and mobile
+```
+
+**See full guide:** [cloud-relay/README.md](cloud-relay/README.md)
+
+**Built-in Free Tier Protection:**
+- 150MB bandwidth/month (enough for 150,000+ text syncs)
+- 50 simultaneous connections max
+- 60 messages per minute per device
+- 100KB max message size
+- Automatic monthly reset
+- Real-time usage monitoring
+
+**Note:** Desktop app integration coming soon. Currently use the mobile web app directly.
 
 ## How It Works
 
@@ -289,6 +316,15 @@ clipboard-sync-tool/
 │   ├── main_window.py         # Main PyQt6 application window
 │   ├── simple_gui.py          # Simplified fallback GUI
 │   └── pairing_server.py      # HTTP server for mobile pairing
+├── cloud-relay/               # Cloud relay server for mobile sync
+│   ├── server.js              # Node.js relay server (Socket.IO)
+│   ├── package.json           # Node.js dependencies
+│   ├── Dockerfile             # Container for Fly.io deployment
+│   ├── fly.toml               # Fly.io configuration
+│   ├── public/
+│   │   ├── index.html         # Mobile PWA interface
+│   │   └── app.js             # Mobile app JavaScript
+│   └── README.md              # Deployment & usage guide
 ├── tests/                     # Test files
 │   ├── test_simple.py         # Basic clipboard tests
 │   ├── test_simple_server.py  # HTTP server connectivity test
@@ -421,7 +457,7 @@ A: Very unlikely. All data is encrypted with AES-256-GCM before transmission. Ev
 A: Unlimited! You can pair as many devices as you want. The encryption system supports multi-peer communication.
 
 **Q: Does it work over the internet?**  
-A: Not currently. Devices must be on the same local network. Internet/cloud sync could be added as a future feature.
+A: Yes! Use the cloud relay server. See [cloud-relay/README.md](cloud-relay/README.md) for setup. Local P2P mode requires same network.
 
 **Q: What happens if I copy a large file?**  
 A: It will sync, but may take time depending on file size and network speed. Files are compressed and encrypted before transfer.
@@ -442,7 +478,7 @@ A: Yes! All synced items are stored in the History tab. You can click any item t
 A: Not yet, but this could be added as a filter feature in future versions.
 
 **Q: Is there a mobile app?**  
-A: Not yet. Currently, mobile devices can only pair with desktop but can't sync clipboard (mobile pairing enables future mobile app support).
+A: Yes! Use the cloud relay web app (PWA) - works on iPhone/Android. Deploy to Fly.io (free), then open on mobile browser. See [cloud-relay/README.md](cloud-relay/README.md) for full guide. Can install to home screen like a native app!
 
 **Q: What if my devices have the same name?**  
 A: Each device gets a unique ID automatically. Names are just for display - duplicates won't cause issues.
@@ -509,8 +545,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - ✅ Digital signatures for content verification
 
 ### Roadmap
-- 🔜 Mobile app (iOS/Android) for clipboard sync
-- 🔜 Cloud relay option for internet-based sync
+- ✅ **Cloud relay for internet-based sync** - DONE! See [cloud-relay/](cloud-relay/)
+- ✅ **Mobile web app (PWA)** - DONE! Works on iOS/Android via cloud relay
+- 🔜 Desktop app integration with cloud relay
+- 🔜 End-to-end encryption for cloud relay (currently Base64 only)
+- 🔜 Native mobile app (iOS/Android) with E2E encryption
 - 🔜 Exclude filters (don't sync passwords, etc.)
 - 🔜 Sync selective clipboard history
 - 🔜 Dark mode
