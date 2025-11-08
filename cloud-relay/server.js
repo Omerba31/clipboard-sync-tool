@@ -265,6 +265,19 @@ io.on('connection', (socket) => {
     });
   });
   
+  // Get devices list
+  socket.on('get_devices', () => {
+    const device = devices.get(socket.id);
+    if (!device) return;
+    
+    const { roomId } = device;
+    const roomDevices = Array.from(rooms.get(roomId) || [])
+      .map(sid => devices.get(sid))
+      .filter(d => d);
+    
+    socket.emit('room_devices', roomDevices);
+  });
+  
   // Ping/pong for connection health
   socket.on('ping', () => {
     socket.emit('pong', { timestamp: Date.now() });

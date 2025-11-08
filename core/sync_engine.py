@@ -466,12 +466,18 @@ class SyncEngine:
             # Create cloud relay client if not exists
             if self.cloud_relay is None:
                 self.cloud_relay = CloudRelayClient(
-                    on_clipboard_received=self._on_cloud_clipboard_received
+                    on_clipboard_received=self._on_cloud_clipboard_received,
+                    on_devices_updated=self._on_devices_updated
                 )
+            
+            # Get device name from system
+            import platform
+            import socket
+            device_name = socket.gethostname() or platform.node() or 'Desktop'
             
             # Connect to server
             success = await self.cloud_relay.connect_to_server(
-                server_url, room_id, self.device_id
+                server_url, room_id, self.device_id, device_name
             )
             
             if success:
@@ -495,6 +501,14 @@ class SyncEngine:
                 logger.info("Disconnected from cloud relay")
         except Exception as e:
             logger.error(f"Error disconnecting from cloud relay: {e}")
+    
+    def _on_devices_updated(self, devices: list):
+        """Handle device list update from cloud relay"""
+        try:
+            logger.info(f"Device list updated: {len(devices)} devices")
+            # TODO: Update GUI with device list
+        except Exception as e:
+            logger.error(f"Error handling devices update: {e}")
     
     def _on_cloud_clipboard_received(self, content: str, data_type: str):
         """Handle clipboard data received from cloud relay"""

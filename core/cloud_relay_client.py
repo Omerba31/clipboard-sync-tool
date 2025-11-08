@@ -13,12 +13,13 @@ import socketio
 class CloudRelayClient:
     """Client for connecting to cloud relay server"""
     
-    def __init__(self, on_clipboard_received: Optional[Callable] = None):
+    def __init__(self, on_clipboard_received: Optional[Callable] = None, on_devices_updated: Optional[Callable] = None):
         """
         Initialize cloud relay client
         
         Args:
             on_clipboard_received: Callback function when clipboard data is received
+            on_devices_updated: Callback function when device list is updated
         """
         self.sio = socketio.AsyncClient(
             reconnection=True,
@@ -30,8 +31,10 @@ class CloudRelayClient:
         self.server_url: Optional[str] = None
         self.room_id: Optional[str] = None
         self.device_id: Optional[str] = None
+        self.device_name: str = 'Desktop'
         self.connected = False
         self.on_clipboard_received = on_clipboard_received
+        self.on_devices_updated = on_devices_updated
         
         # Setup event handlers
         self.setup_handlers()
@@ -45,14 +48,15 @@ class CloudRelayClient:
             self.connected = True
             logger.info(f"Connected to cloud relay: {self.server_url}")
             
-            # Join room if we have room_id
+            # Register device if we have room_id
             if self.room_id:
-                await self.sio.emit('join_room', {
-                    'room_id': self.room_id,
-                    'device_id': self.device_id,
-                    'device_type': 'desktop'
+                await self.sio.emit('register', {
+                    'roomId': self.room_id,
+                    'deviceId': self.device_id,
+                    'deviceName': self.device_name if hasattr(self, 'device_name') else 'Desktop',
+                    'deviceType': 'desktop'
                 })
-                logger.info(f"Joined room: {self.room_id}")
+                logger.info(f"Registered to room: {self.room_id}")
         
         @self.sio.event
         async def disconnect():
@@ -69,6 +73,23 @@ class CloudRelayClient:
         async def room_joined(data):
             """Handle room joined confirmation"""
             logger.info(f"Room joined confirmation: {data}")
+        
+        @self.sio.event
+        async def room_devices(devices):
+            """Handle room devices list"""
+            logger.info(f"Room devices updated: {len(devices)} devices")
+            if self.on_devices_updated:
+                self.on_devices_updated(devices)
+        
+        @self.sio.event
+        async def device_joined(data):
+            """Handle new device joining"""
+            logger.info(f"Device joined: {data.get('deviceName', 'Unknown')}")
+        
+        @self.sio.event
+        async def device_left(data):
+            """Handle device leaving"""
+            logger.info(f"Device left: {data.get('deviceName', 'Unknown')}")
         
         @self.sio.event
         async def clipboard_data(data):
@@ -100,7 +121,7 @@ class CloudRelayClient:
             """Handle error from server"""
             logger.error(f"Server error: {data.get('message', 'Unknown error')}")
     
-    async def connect_to_server(self, server_url: str, room_id: str, device_id: str) -> bool:
+    async def connect_to_server(self, server_url: str, room_id: str, device_id: str, device_name: str = 'Desktop') -> bool:
         """
         Connect to cloud relay server
         
@@ -108,6 +129,7 @@ class CloudRelayClient:
             server_url: URL of the cloud relay server (e.g., https://your-app.fly.dev)
             room_id: Room ID to join for syncing
             device_id: Unique device identifier
+            device_name: Name of this device (default: 'Desktop')
             
         Returns:
             True if connected successfully
@@ -123,6 +145,7 @@ class CloudRelayClient:
             self.server_url = server_url
             self.room_id = room_id
             self.device_id = device_id
+            self.device_name = device_name
             
             # Ensure URL has protocol
             if not server_url.startswith(('http://', 'https://')):

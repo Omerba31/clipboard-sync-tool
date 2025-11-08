@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
         document.getElementById('roomIdInput').value = saved.roomId;
         document.getElementById('deviceNameInput').value = saved.deviceName;
+        
+        // Auto-connect if credentials exist
+        roomId = saved.roomId;
+        deviceName = saved.deviceName;
+        deviceId = 'mobile-' + Math.random().toString(36).substr(2, 9);
+        
+        // Hide modal and connect
+        document.getElementById('connectionModal').classList.remove('show');
+        connectToServer();
     }
     
     // Add paste event listener for images
@@ -126,11 +135,15 @@ function connectToServer() {
     socket.on('device_joined', (device) => {
         console.log('[+] Device joined:', device.deviceName);
         showNotification(`📱 ${device.deviceName} joined`);
+        // Request updated device list
+        socket.emit('get_devices');
     });
 
     socket.on('device_left', (device) => {
         console.log('[-] Device left:', device.deviceName);
         showNotification(`👋 ${device.deviceName} left`);
+        // Request updated device list
+        socket.emit('get_devices');
     });
 
     socket.on('clipboard_data', (data) => {
