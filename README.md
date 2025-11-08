@@ -181,16 +181,38 @@ Mobile browsers cannot act as P2P servers, so direct local sync isn't possible. 
 - ✅ **Real-time sync** via WebSocket
 
 **Quick Setup:**
+
+**Option A - Automated (Recommended):**
+```powershell
+# Windows
+.\deploy-cloud-relay.ps1
+
+# Mac/Linux
+chmod +x deploy-cloud-relay.sh
+./deploy-cloud-relay.sh
+```
+The script will:
+- Install Fly CLI if needed
+- Authenticate with Fly.io
+- Deploy the cloud relay
+- Show you the app URL
+
+**Option B - Manual:**
 ```bash
-# 1. Deploy relay server (one-time setup)
+# 1. Install Fly CLI (if not installed)
+# Windows: iwr https://fly.io/install.ps1 -useb | iex
+# Mac/Linux: curl -L https://fly.io/install.sh | sh
+
+# 2. Deploy relay server
 cd cloud-relay
+fly auth login
 fly launch
 fly deploy
 
-# 2. Open on mobile
+# 3. Open on mobile
 https://your-app.fly.dev
 
-# 3. Enter same Room ID on desktop and mobile
+# 4. Enter same Room ID on desktop and mobile
 ```
 
 **See full guide:** [cloud-relay/README.md](cloud-relay/README.md)
