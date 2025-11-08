@@ -168,25 +168,53 @@ function sendToDesktop() {
 
     // Send image if selected
     if (selectedImage) {
+        const timestamp = Date.now();
         socket.emit('clipboard_data', {
             encrypted_content: selectedImage, // Base64 data URL
             content_type: 'image',
-            timestamp: Date.now()
+            timestamp: timestamp
         });
         
-        showNotification('✅ Image sent to desktop!');
+        // Add to local history as "sent" item
+        clipboardHistory.unshift({
+            content: selectedImage,
+            contentType: 'image',
+            timestamp: timestamp,
+            from: 'You (sent)'
+        });
+        
+        if (clipboardHistory.length > 10) {
+            clipboardHistory.pop();
+        }
+        
+        displayReceivedContent();
+        showNotification('✅ Image sent to other devices!');
         clearImage();
     }
     
     // Send text if provided
     if (text) {
+        const timestamp = Date.now();
         socket.emit('clipboard_data', {
             encrypted_content: btoa(text), // Base64 encode
             content_type: 'text',
-            timestamp: Date.now()
+            timestamp: timestamp
         });
         
-        showNotification('✅ Text sent to desktop!');
+        // Add to local history as "sent" item
+        clipboardHistory.unshift({
+            content: text,
+            contentType: 'text',
+            timestamp: timestamp,
+            from: 'You (sent)'
+        });
+        
+        if (clipboardHistory.length > 10) {
+            clipboardHistory.pop();
+        }
+        
+        displayReceivedContent();
+        showNotification('✅ Text sent to other devices!');
         document.getElementById('sendText').value = '';
     }
 }
@@ -224,6 +252,7 @@ function receiveFromDesktop(data) {
 
 function displayReceivedContent() {
     const container = document.getElementById('receivedContent');
+    const copyAllBtn = document.getElementById('copyAllBtn');
     
     if (clipboardHistory.length === 0) {
         container.innerHTML = `
@@ -232,8 +261,12 @@ function displayReceivedContent() {
                 <p style="font-size: 0.9em; margin-top: 10px;">Content from your desktop will appear here.<br>Tap to copy to clipboard.</p>
             </div>
         `;
+        copyAllBtn.style.display = 'none';
         return;
     }
+    
+    // Show Copy All button when there's content
+    copyAllBtn.style.display = 'inline-block';
 
     container.innerHTML = clipboardHistory.map((item, index) => {
         const date = new Date(item.timestamp);
@@ -274,6 +307,32 @@ function copyToClipboard(text) {
         document.execCommand('copy');
         document.body.removeChild(textarea);
         showNotification('✅ Copied to clipboard!');
+    });
+}
+
+function copyAllContent() {
+    // Collect all text content (skip images)
+    const allText = clipboardHistory
+        .filter(item => item.contentType !== 'image')
+        .map(item => item.content)
+        .join('\n\n---\n\n'); // Separate items with line breaks
+    
+    if (!allText) {
+        showNotification('⚠️ No text content to copy', 'error');
+        return;
+    }
+    
+    navigator.clipboard.writeText(allText).then(() => {
+        showNotification(`✅ Copied ${clipboardHistory.filter(i => i.contentType !== 'image').length} items!`);
+    }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = allText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showNotification(`✅ Copied ${clipboardHistory.filter(i => i.contentType !== 'image').length} items!`);
     });
 }
 

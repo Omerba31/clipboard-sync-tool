@@ -347,7 +347,10 @@
         </div>
 
         <div class="card">
-            <h2>📥 Received Content</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin-bottom: 0;">📥 Received Content</h2>
+                <button id="copyAllBtn" class="button" style="padding: 8px 16px; font-size: 0.9em; display: none;" onclick="copyAllContent()">📋 Copy All</button>
+            </div>
             <div id="receivedContent" class="empty-state">
                 <p>📭 No content yet</p>
                 <p style="font-size: 0.9em; margin-top: 10px;">Content from other devices will appear here.<br>Tap to copy to clipboard.</p>
