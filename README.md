@@ -21,7 +21,15 @@
 ```bash
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
-pip install -r requirements.txt
+
+# Windows
+.\install.ps1
+
+# Mac/Linux
+chmod +x install.sh
+./install.sh
+
+# Run the app
 python main.py
 ```
 
@@ -122,10 +130,24 @@ chmod +x deploy-cloud-relay.sh
 ```
 
 The script will:
-- ✅ Install Fly CLI
+- ✅ Install Fly CLI (if not already installed)
 - ✅ Authenticate with Fly.io
 - ✅ Deploy your cloud relay
 - ✅ Give you your custom URL
+
+**If Fly CLI is installed but not recognized:**
+
+Windows (PowerShell - restart terminal or run):
+```powershell
+$env:Path += ";$env:USERPROFILE\.fly\bin"
+```
+
+Mac/Linux (add to ~/.bashrc or ~/.zshrc):
+```bash
+export PATH="$HOME/.fly/bin:$PATH"
+```
+
+Then close and reopen your terminal, or run `source ~/.bashrc` (Mac/Linux).
 
 Then use your own URL instead of the public one!
 

@@ -296,19 +296,22 @@ function updateDevicesList(devices) {
     const list = document.getElementById('devicesList');
     
     if (!devices || devices.length === 0) {
-        list.innerHTML = '<li class="empty-state">No other devices connected</li>';
+        list.innerHTML = '<li class="empty-state">No devices connected</li>';
         return;
     }
 
+    // Show all devices including self
     list.innerHTML = devices
-        .filter(d => d.deviceId !== deviceId) // Don't show self
         .map(device => {
             const icon = device.deviceType === 'desktop' ? '🖥️' : '📱';
+            const isSelf = device.deviceId === deviceId;
+            const nameDisplay = isSelf ? `${escapeHtml(device.deviceName)} (You)` : escapeHtml(device.deviceName);
+            
             return `
                 <li class="device-item">
                     <span class="device-icon">${icon}</span>
                     <div class="device-info">
-                        <div class="device-name">${escapeHtml(device.deviceName)}</div>
+                        <div class="device-name">${nameDisplay}</div>
                         <div class="device-type">${device.deviceType}</div>
                     </div>
                 </li>
