@@ -11,14 +11,14 @@ PyQt6>=6.6.0              # Modern GUI framework
 qrcode>=7.4.2             # QR code generation
 
 # Storage
-sqlalchemy==2.0.23        # Database ORM
+sqlalchemy>=2.0.23        # Database ORM
 
 # Utilities
-colorama==0.4.6           # Colored terminal output
-loguru==0.7.2             # Better logging
-pytest==7.4.3             # Testing
+colorama>=0.4.6           # Colored terminal output
+loguru>=0.7.2             # Better logging
+pytest>=7.4.3             # Testing
 
 # Additional dependencies that were missing
-python-magic-bin==0.4.14  # File type detection (Windows)
-websocket-client==1.6.4   # WebSocket support
-pywin32==306              # Windows clipboard support (optional, Windows only)
+python-magic-bin>=0.4.14  # File type detection (Windows)
+websocket-client>=1.6.4   # WebSocket support
+pywin32>=311              # Windows clipboard support (optional, Windows only)
