@@ -59,6 +59,10 @@ class SyncEngine:
         self.discovery = NetworkDiscovery(self.device_id, self.device_name)
         self.p2p = P2PCommunication(self.device_id, self.encryption)
         
+        # Cloud relay client (lazy initialization)
+        self.cloud_relay = None
+        self.cloud_relay_enabled = False
+        
         # Settings and state
         self.settings = SyncSettings()
         self.is_running = False
@@ -180,11 +184,13 @@ class SyncEngine:
     
     def _on_clipboard_change(self, clipboard_data: ClipboardContent):
         """Handle local clipboard change"""
-        # Don't sync if it came from another device
-        if self.incoming_clipboard and \
-           self.incoming_clipboard == clipboard_data.checksum:
-            self.incoming_clipboard = None
-            return
+        # Don't sync if it came from another device (local or cloud)
+        if self.incoming_clipboard:
+            # Check if it's the same content
+            if self.incoming_clipboard == clipboard_data.checksum or \
+               self.incoming_clipboard == clipboard_data.text_content:
+                self.incoming_clipboard = None
+                return
         
         # Check settings
         if not self._should_sync_content(clipboard_data):
@@ -196,7 +202,7 @@ class SyncEngine:
         # Prepare content for encryption
         content_bytes = self._content_to_bytes(clipboard_data)
         
-        # Encrypt for all paired devices
+        # Encrypt for all paired devices (local P2P)
         if self.paired_devices:
             encrypted_data = self.encryption.encrypt_content(
                 content_bytes,
@@ -214,6 +220,13 @@ class SyncEngine:
             )
             
             logger.info(f"Clipboard synced to {len(self.paired_devices)} devices")
+        
+        # Send to cloud relay if connected
+        if self.cloud_relay_enabled and clipboard_data.content_type == ContentType.TEXT:
+            asyncio.run_coroutine_threadsafe(
+                self._send_to_cloud_relay(clipboard_data.text_content, 'text'),
+                self.loop
+            )
     
     def _on_device_discovered(self, device: Device):
         """Handle new device discovery"""
@@ -419,3 +432,92 @@ class SyncEngine:
             'timestamp': datetime.now().isoformat()
         }
         return json.dumps(qr_data)
+    
+    # ==================== Cloud Relay Methods ====================
+    
+    async def connect_to_cloud_relay(self, server_url: str, room_id: str) -> bool:
+        """
+        Connect to cloud relay server for mobile sync
+        
+        Args:
+            server_url: URL of the cloud relay server (e.g., https://your-app.fly.dev)
+            room_id: Room ID to join for syncing
+            
+        Returns:
+            True if connected successfully
+        """
+        try:
+            # Import here to avoid circular dependency
+            from .cloud_relay_client import CloudRelayClient
+            
+            # Create cloud relay client if not exists
+            if self.cloud_relay is None:
+                self.cloud_relay = CloudRelayClient(
+                    on_clipboard_received=self._on_cloud_clipboard_received
+                )
+            
+            # Connect to server
+            success = await self.cloud_relay.connect_to_server(
+                server_url, room_id, self.device_id
+            )
+            
+            if success:
+                self.cloud_relay_enabled = True
+                logger.info(f"Connected to cloud relay: {server_url} in room {room_id}")
+            else:
+                logger.error("Failed to connect to cloud relay")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error connecting to cloud relay: {e}")
+            return False
+    
+    async def disconnect_from_cloud_relay(self):
+        """Disconnect from cloud relay server"""
+        try:
+            if self.cloud_relay:
+                await self.cloud_relay.disconnect_from_server()
+                self.cloud_relay_enabled = False
+                logger.info("Disconnected from cloud relay")
+        except Exception as e:
+            logger.error(f"Error disconnecting from cloud relay: {e}")
+    
+    def _on_cloud_clipboard_received(self, content: str, data_type: str):
+        """Handle clipboard data received from cloud relay"""
+        try:
+            logger.info(f"Received clipboard from cloud relay: {data_type}")
+            
+            # Set incoming clipboard to prevent echo
+            self.incoming_clipboard = content
+            
+            # Update local clipboard
+            if data_type == 'text':
+                pyperclip.copy(content)
+                logger.info("✅ Clipboard updated from cloud relay")
+            
+            # Clear incoming after a moment
+            def clear_incoming():
+                import time
+                time.sleep(0.5)
+                self.incoming_clipboard = None
+            
+            threading.Thread(target=clear_incoming, daemon=True).start()
+            
+        except Exception as e:
+            logger.error(f"Error processing cloud clipboard: {e}")
+    
+    async def _send_to_cloud_relay(self, content: str, content_type: str):
+        """Send clipboard data to cloud relay"""
+        if not self.cloud_relay_enabled or not self.cloud_relay:
+            return
+        
+        try:
+            await self.cloud_relay.send_clipboard(content, content_type)
+            logger.info(f"Sent clipboard to cloud relay: {content_type}")
+        except Exception as e:
+            logger.error(f"Failed to send to cloud relay: {e}")
+    
+    def is_cloud_relay_connected(self) -> bool:
+        """Check if connected to cloud relay"""
+        return self.cloud_relay_enabled and self.cloud_relay and self.cloud_relay.is_connected()

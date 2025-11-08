@@ -1168,13 +1168,57 @@ class MainWindow(QMainWindow):
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
         
-        # TODO: Implement actual cloud relay connection
-        # For now, just show success message
-        QMessageBox.information(dialog, "Coming Soon!", 
-                              f"Cloud relay integration is being developed!\n\n"
-                              f"For now, use the mobile web app at:\n{url}\n\n"
-                              f"Desktop integration coming in next update.")
-        dialog.close()
+        # Check if sync engine is available
+        if not self.sync_engine or not CORE_AVAILABLE:
+            QMessageBox.warning(dialog, "Error", 
+                              "Sync engine not available. Core modules may not be loaded.")
+            return
+        
+        # Show connecting message
+        progress = QMessageBox(dialog)
+        progress.setWindowTitle("Connecting...")
+        progress.setText(f"Connecting to cloud relay...\n{url}")
+        progress.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        progress.show()
+        
+        # Connect to cloud relay in async
+        import asyncio
+        
+        async def do_connect():
+            success = await self.sync_engine.connect_to_cloud_relay(url, room_id)
+            return success
+        
+        try:
+            # Run connection in sync engine's event loop
+            future = asyncio.run_coroutine_threadsafe(
+                do_connect(),
+                self.sync_engine.loop
+            )
+            
+            # Wait for connection (with timeout)
+            success = future.result(timeout=10)
+            progress.close()
+            
+            if success:
+                QMessageBox.information(dialog, "✅ Connected!", 
+                                      f"Successfully connected to cloud relay!\n\n"
+                                      f"Server: {url}\n"
+                                      f"Room: {room_id}\n\n"
+                                      f"Your clipboard is now syncing with mobile devices in this room.")
+                self.status_label.setText("🟢 Sync Active (Cloud + Local)")
+                dialog.close()
+            else:
+                QMessageBox.warning(dialog, "Connection Failed", 
+                                  f"Could not connect to cloud relay.\n\n"
+                                  f"Please check:\n"
+                                  f"• Server URL is correct\n"
+                                  f"• Server is running\n"
+                                  f"• Internet connection is working")
+        except Exception as e:
+            progress.close()
+            QMessageBox.critical(dialog, "Error", 
+                               f"Failed to connect:\n{str(e)}\n\n"
+                               f"Check the console for more details.")
     
     def pair_device(self, device):
         """Pair with a device"""
