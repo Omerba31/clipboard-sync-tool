@@ -1,14 +1,14 @@
 # Core dependencies
 pyperclip==1.8.2          # Clipboard access
-cryptography==41.0.7       # Modern encryption
-zeroconf==0.131.0         # Network discovery
-Pillow==10.1.0            # Image handling
-python-socketio==5.10.0    # Real-time communication
-aiohttp==3.9.0            # Async HTTP
+cryptography>=43.0.0       # Modern encryption
+zeroconf>=0.131.0         # Network discovery
+Pillow>=11.0.0            # Image handling (compatible with Python 3.14)
+python-socketio>=5.10.0    # Real-time communication
+aiohttp>=3.9.0            # Async HTTP
 
 # GUI dependencies  
-PyQt6==6.6.0              # Modern GUI framework
-qrcode==7.4.2             # QR code generation
+PyQt6>=6.6.0              # Modern GUI framework
+qrcode>=7.4.2             # QR code generation
 
 # Storage
 sqlalchemy==2.0.23        # Database ORM
