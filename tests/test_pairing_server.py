@@ -3,8 +3,14 @@
 Test the pairing server independently
 """
 
+import sys
+import os
 import time
 import webbrowser
+
+# Add parent directory to path so we can import gui module
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from gui.pairing_server import PairingServer
 
 # Mock sync engine for testing
