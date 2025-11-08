@@ -8,8 +8,29 @@ Write-Host ""
 
 # Check if Fly CLI is installed
 Write-Host "Checking Fly CLI..." -ForegroundColor Yellow
-if (Get-Command fly -ErrorAction SilentlyContinue) {
-    $flyVersion = fly version 2>&1
+
+# Check common installation locations
+$flyPaths = @(
+    "fly",  # Check PATH first
+    "$env:USERPROFILE\.fly\bin\flyctl.exe",
+    "C:\Program Files\fly\bin\flyctl.exe"
+)
+
+$flyCmd = $null
+foreach ($path in $flyPaths) {
+    if ($path -eq "fly") {
+        if (Get-Command fly -ErrorAction SilentlyContinue) {
+            $flyCmd = "fly"
+            break
+        }
+    } elseif (Test-Path $path) {
+        $flyCmd = $path
+        break
+    }
+}
+
+if ($flyCmd) {
+    $flyVersion = & $flyCmd version 2>&1
     Write-Host "✅ Fly CLI found: $flyVersion" -ForegroundColor Green
 } else {
     Write-Host "❌ Fly CLI not found" -ForegroundColor Red
@@ -22,8 +43,15 @@ if (Get-Command fly -ErrorAction SilentlyContinue) {
         try {
             iwr https://fly.io/install.ps1 -useb | iex
             Write-Host "✅ Fly CLI installed!" -ForegroundColor Green
-            Write-Host "⚠️  Please restart PowerShell and run this script again" -ForegroundColor Yellow
-            exit 0
+            
+            # Try to find it again
+            $flyCmd = "$env:USERPROFILE\.fly\bin\flyctl.exe"
+            if (Test-Path $flyCmd) {
+                Write-Host "✅ Found Fly CLI at: $flyCmd" -ForegroundColor Green
+            } else {
+                Write-Host "⚠️  Please restart PowerShell and run this script again" -ForegroundColor Yellow
+                exit 0
+            }
         } catch {
             Write-Host "❌ Failed to install Fly CLI" -ForegroundColor Red
             Write-Host "Please install manually: https://fly.io/docs/hands-on/install-flyctl/" -ForegroundColor Gray
@@ -38,12 +66,12 @@ if (Get-Command fly -ErrorAction SilentlyContinue) {
 # Check if user is logged in
 Write-Host ""
 Write-Host "Checking Fly.io authentication..." -ForegroundColor Yellow
-$authCheck = fly auth whoami 2>&1
+$authCheck = & $flyCmd auth whoami 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "⚠️  Not logged in to Fly.io" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Opening browser for login..." -ForegroundColor Cyan
-    fly auth login
+    & $flyCmd auth login
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host "❌ Login failed" -ForegroundColor Red
@@ -70,16 +98,16 @@ if ($flyToml -match 'app\s*=\s*"([^"]+)"') {
     $appName = $matches[1]
     Write-Host "Found existing app config: $appName" -ForegroundColor Cyan
     
-    $flyApps = fly apps list 2>&1
+    $flyApps = & $flyCmd apps list 2>&1
     if ($flyApps -match $appName) {
         Write-Host "✅ App already exists" -ForegroundColor Green
         Write-Host ""
         Write-Host "Deploying update..." -ForegroundColor Cyan
-        fly deploy
+        & $flyCmd deploy
     } else {
         Write-Host "⚠️  App not found in your account" -ForegroundColor Yellow
         Write-Host "Creating new deployment..." -ForegroundColor Cyan
-        fly launch
+        & $flyCmd launch
     }
 } else {
     Write-Host "No existing deployment found" -ForegroundColor Gray
@@ -90,7 +118,7 @@ if ($flyToml -match 'app\s*=\s*"([^"]+)"') {
     Write-Host "  - Region (choose closest to you)" -ForegroundColor Gray
     Write-Host "  - Database: Select NO" -ForegroundColor Gray
     Write-Host ""
-    fly launch
+    & $flyCmd launch
 }
 
 Pop-Location
@@ -103,15 +131,19 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "Your cloud relay is now live!" -ForegroundColor Green
     Write-Host ""
+    Write-Host "Getting your app URL..." -ForegroundColor Yellow
+    Write-Host ""
+    & $flyCmd apps list
+    Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Yellow
-    Write-Host "  1. Get your app URL: fly apps list" -ForegroundColor White
-    Write-Host "  2. Open URL on your mobile device" -ForegroundColor White
+    Write-Host "  1. Copy the hostname from above (e.g., my-app.fly.dev)" -ForegroundColor White
+    Write-Host "  2. Open https://YOUR-APP.fly.dev on your mobile device" -ForegroundColor White
     Write-Host "  3. Enter a Room ID and start syncing!" -ForegroundColor White
     Write-Host ""
     Write-Host "Monitor your app:" -ForegroundColor Yellow
-    Write-Host "  - Status: fly status" -ForegroundColor White
-    Write-Host "  - Logs: fly logs" -ForegroundColor White
-    Write-Host "  - Dashboard: fly dashboard" -ForegroundColor White
+    Write-Host "  - Status: & '$flyCmd' status" -ForegroundColor White
+    Write-Host "  - Logs: & '$flyCmd' logs" -ForegroundColor White
+    Write-Host "  - Dashboard: & '$flyCmd' dashboard" -ForegroundColor White
     Write-Host ""
 } else {
     Write-Host ""
