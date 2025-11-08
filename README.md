@@ -225,7 +225,26 @@ https://your-app.fly.dev
 - Automatic monthly reset
 - Real-time usage monitoring
 
-**Note:** Desktop app integration coming soon. Currently use the mobile web app directly.
+**Using Cloud Relay:**
+
+**On Desktop:**
+1. Launch app: `python main.py`
+2. Click "☁️ Cloud Relay" button
+3. Enter your Fly.io URL (e.g., `https://your-app.fly.dev`)
+4. Enter a Room ID (e.g., `my-clipboard`)
+5. Click "Connect"
+
+**On Mobile:**
+1. Open your Fly.io URL in browser
+2. Enter the **same Room ID** as desktop
+3. Copy/paste clipboard content
+
+Both devices are now syncing through the cloud! 🎉
+
+**Sync Modes:**
+- **Local P2P**: Desktop ↔ Desktop (same network, fast, encrypted)
+- **Cloud Relay**: Desktop ↔ Mobile (anywhere, internet required)
+- **Both**: Works simultaneously - sync with desktops locally AND mobile via cloud
 
 ## How It Works
 
