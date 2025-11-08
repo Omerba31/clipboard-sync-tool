@@ -322,9 +322,13 @@ class MainWindow(QMainWindow):
         self.pause_btn.clicked.connect(self.toggle_sync)
         layout.addWidget(self.pause_btn)
         
-        qr_btn = QPushButton("📱 Show QR")
+        qr_btn = QPushButton("📱 Local P2P")
         qr_btn.clicked.connect(self.show_qr_code)
         layout.addWidget(qr_btn)
+        
+        cloud_btn = QPushButton("☁️ Cloud Relay")
+        cloud_btn.clicked.connect(self.show_cloud_relay)
+        layout.addWidget(cloud_btn)
         
         header.setLayout(layout)
         return header
@@ -1027,6 +1031,150 @@ class MainWindow(QMainWindow):
         
         dialog.setLayout(layout)
         dialog.exec()
+    
+    def show_cloud_relay(self):
+        """Show cloud relay connection dialog"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("☁️ Cloud Relay Connection")
+        dialog.setFixedSize(500, 400)
+        
+        layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        
+        # Title
+        title = QLabel("☁️ Connect to Cloud Relay")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(title)
+        
+        # Description
+        desc = QLabel("Connect your desktop to the cloud relay server for mobile sync.\nMake sure you've deployed your relay to Fly.io first!")
+        desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        desc.setStyleSheet("color: #666; margin-bottom: 20px;")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+        
+        # Server URL input
+        url_label = QLabel("Cloud Relay URL:")
+        url_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
+        layout.addWidget(url_label)
+        
+        self.cloud_url_input = QLineEdit()
+        self.cloud_url_input.setPlaceholderText("https://your-app.fly.dev")
+        self.cloud_url_input.setStyleSheet("""
+            QLineEdit {
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #4CAF50;
+            }
+        """)
+        layout.addWidget(self.cloud_url_input)
+        
+        # Room ID input
+        room_label = QLabel("Room ID (must match mobile device):")
+        room_label.setStyleSheet("font-weight: bold; margin-top: 15px;")
+        layout.addWidget(room_label)
+        
+        self.room_id_input = QLineEdit()
+        self.room_id_input.setPlaceholderText("my-clipboard")
+        self.room_id_input.setStyleSheet("""
+            QLineEdit {
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #4CAF50;
+            }
+        """)
+        layout.addWidget(self.room_id_input)
+        
+        # Info box
+        info_box = QLabel("💡 Tip: Use the same Room ID on your mobile device to sync clipboards across all your devices!")
+        info_box.setStyleSheet("""
+            QLabel {
+                background-color: #E3F2FD;
+                color: #1976D2;
+                padding: 12px;
+                border-radius: 6px;
+                margin-top: 15px;
+            }
+        """)
+        info_box.setWordWrap(True)
+        layout.addWidget(info_box)
+        
+        layout.addStretch()
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        
+        connect_btn = QPushButton("🔌 Connect")
+        connect_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        connect_btn.clicked.connect(lambda: self.connect_to_cloud_relay(dialog))
+        btn_layout.addWidget(connect_btn)
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setStyleSheet("""
+            QPushButton {
+                padding: 12px 30px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        cancel_btn.clicked.connect(dialog.close)
+        btn_layout.addWidget(cancel_btn)
+        
+        layout.addLayout(btn_layout)
+        
+        dialog.setLayout(layout)
+        dialog.exec()
+    
+    def connect_to_cloud_relay(self, dialog):
+        """Connect to cloud relay with given URL and room ID"""
+        url = self.cloud_url_input.text().strip()
+        room_id = self.room_id_input.text().strip()
+        
+        if not url:
+            QMessageBox.warning(dialog, "Missing URL", "Please enter your cloud relay URL")
+            return
+        
+        if not room_id:
+            QMessageBox.warning(dialog, "Missing Room ID", "Please enter a Room ID")
+            return
+        
+        # Add https:// if not present
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+        
+        # TODO: Implement actual cloud relay connection
+        # For now, just show success message
+        QMessageBox.information(dialog, "Coming Soon!", 
+                              f"Cloud relay integration is being developed!\n\n"
+                              f"For now, use the mobile web app at:\n{url}\n\n"
+                              f"Desktop integration coming in next update.")
+        dialog.close()
     
     def pair_device(self, device):
         """Pair with a device"""
