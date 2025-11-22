@@ -345,7 +345,7 @@ function displayReceivedContent() {
             `;
         } else {
             return `
-                <div class="clipboard-item" onclick="copyToClipboard('${item.content.replace(/'/g, "\\'")}')">
+                <div class="clipboard-item" onclick="copyToClipboard(${index})">
                     <div class="clipboard-item-time">
                         📝 ${date.toLocaleTimeString()} - from ${item.from}
                     </div>
@@ -356,7 +356,11 @@ function displayReceivedContent() {
     }).join('');
 }
 
-function copyToClipboard(text) {
+function copyToClipboard(index) {
+    const item = clipboardHistory[index];
+    if (!item || item.contentType !== 'text') return;
+    
+    const text = item.content;
     navigator.clipboard.writeText(text).then(() => {
         showNotification('✅ Copied to clipboard!');
     }).catch(() => {

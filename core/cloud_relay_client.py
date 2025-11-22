@@ -95,12 +95,12 @@ class CloudRelayClient:
         async def clipboard_data(data):
             """Handle received clipboard data"""
             try:
-                # Extract data
-                content = data.get('data', '')
-                data_type = data.get('type', 'text')
-                from_device = data.get('from_device', 'unknown')
+                # Extract data - handle both old and new format
+                content = data.get('encrypted_content', data.get('data', ''))
+                data_type = data.get('content_type', data.get('type', 'text'))
+                from_device = data.get('from_device', data.get('from_name', 'unknown'))
                 
-                logger.info(f"Received clipboard from {from_device}: {data_type} ({len(content)} bytes)")
+                logger.info(f"Received clipboard from {from_device}: {data_type} ({len(str(content))} chars)")
                 
                 # Decode base64 if it's text
                 if data_type == 'text':
