@@ -179,7 +179,8 @@ class DeviceWidget(QWidget):
                     background-color: #45a049;
                 }
             """)
-            pair_btn.clicked.connect(lambda: self.pair_signal.emit(self.device))
+            # Store a reference to the button for external connection
+            self.pair_btn = pair_btn
             layout.addWidget(pair_btn)
         else:
             trust_label = QLabel("✔ Connected")
@@ -902,9 +903,9 @@ class MainWindow(QMainWindow):
             for device in discovered:
                 device_widget = DeviceWidget({'name': device.name, 'status': 'discovered', 
                                              'ip_address': device.ip_address})
-                # Store the actual Device object for pairing
-                device_widget.device_obj = device
-                device_widget.pair_signal.connect(lambda d=device: self.pair_device(d))
+                # Connect button directly to pair_device with the actual Device object
+                if hasattr(device_widget, 'pair_btn'):
+                    device_widget.pair_btn.clicked.connect(lambda checked, d=device: self.pair_device(d))
                 self.discovered_layout.insertWidget(0, device_widget)
             
             # Add paired devices
