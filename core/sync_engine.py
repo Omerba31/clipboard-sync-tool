@@ -517,8 +517,9 @@ class SyncEngine:
         try:
             logger.info(f"Received clipboard from cloud relay: {data_type}")
             
-            # Set incoming clipboard to prevent echo
-            self.incoming_clipboard = content
+            # Set incoming clipboard checksum to prevent echo (consistent with P2P)
+            import hashlib
+            self.incoming_clipboard = hashlib.sha256(content.encode() if isinstance(content, str) else content).hexdigest()
             
             # Update local clipboard
             if data_type == 'text':

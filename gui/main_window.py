@@ -902,7 +902,9 @@ class MainWindow(QMainWindow):
             for device in discovered:
                 device_widget = DeviceWidget({'name': device.name, 'status': 'discovered', 
                                              'ip_address': device.ip_address})
-                device_widget.pair_signal.connect(self.pair_device)
+                # Store the actual Device object for pairing
+                device_widget.device_obj = device
+                device_widget.pair_signal.connect(lambda d=device: self.pair_device(d))
                 self.discovered_layout.insertWidget(0, device_widget)
             
             # Add paired devices
@@ -1465,7 +1467,9 @@ class MainWindow(QMainWindow):
         if self.sync_engine and CORE_AVAILABLE:
             try:
                 self.sync_engine._pair_with_device(device)
-                QMessageBox.information(self, "Success", f"Paired with {device.get('name', 'device')}")
+                # Get device name - handle both dict and Device object
+                device_name = device.name if hasattr(device, 'name') else device.get('name', 'device')
+                QMessageBox.information(self, "Success", f"Paired with {device_name}")
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Could not pair: {str(e)}")
     
