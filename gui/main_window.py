@@ -498,7 +498,11 @@ class MainWindow(QMainWindow):
         self.cloud_status_card.setLayout(cloud_card_layout)
         layout.addWidget(self.cloud_status_card)
         
-        # Info label
+        # Info label with refresh button
+        info_widget = QWidget()
+        info_layout = QHBoxLayout()
+        info_layout.setContentsMargins(0, 0, 0, 0)
+        
         info_label = QLabel("💡 Local P2P: Devices on the same WiFi will appear below")
         info_label.setStyleSheet("""
             QLabel {
@@ -506,11 +510,30 @@ class MainWindow(QMainWindow):
                 color: #1976D2;
                 padding: 12px;
                 border-radius: 6px;
-                margin-bottom: 10px;
             }
         """)
         info_label.setWordWrap(True)
-        layout.addWidget(info_label)
+        info_layout.addWidget(info_label, 1)
+        
+        refresh_btn = QPushButton("🔄 Refresh")
+        refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
+        refresh_btn.clicked.connect(self.update_devices_display)
+        info_layout.addWidget(refresh_btn)
+        
+        info_widget.setLayout(info_layout)
+        layout.addWidget(info_widget)
         
         # Discovered devices (local P2P)
         discovered_group = QGroupBox("Discovered Devices (Local Network)")
