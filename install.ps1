@@ -72,11 +72,11 @@ if ($hasNode -and $hasGit) {
         Write-Host "   - Select your clipboard-sync-tool repository" -ForegroundColor White
         Write-Host "   - Click 'Deploy Now'" -ForegroundColor White
         Write-Host ""
-        Write-Host "3. Configure your service:" -ForegroundColor Yellow
+        Write-Host "3. Configure your service (IMPORTANT):" -ForegroundColor Yellow
         Write-Host "   - Click on your service" -ForegroundColor White
         Write-Host "   - Go to Settings tab" -ForegroundColor White
-        Write-Host "   - Set Root Directory: cloud-relay" -ForegroundColor White
-        Write-Host "   - Click 'Generate Domain'" -ForegroundColor White
+        Write-Host "   - Set Root Directory to: cloud-relay" -ForegroundColor Cyan
+        Write-Host "   - Click 'Generate Domain' to get your URL" -ForegroundColor White
         Write-Host ""
         Write-Host "4. Save your URL:" -ForegroundColor Yellow
         Write-Host "   - Copy the generated domain (e.g., yourapp.up.railway.app)" -ForegroundColor White

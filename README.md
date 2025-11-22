@@ -76,7 +76,7 @@ python main.py
 
 **In the app:**
 - Click "☁️ Cloud Relay"
-- Enter URL: `https://your-service.up.railway.app` (your deployed service)
+- Enter URL: `https://clipboard-sync-tool-production.up.railway.app` (your deployed service)
 - Enter a Room ID (e.g., `my-room-123`)
 - Connect!
 
@@ -121,8 +121,8 @@ python main.py
 
 1. Click **☁️ Cloud Relay** button in the app
 2. The URL is **auto-filled** if you used automated install!
-   - Or enter: `https://clipboard-sync-tool.fly.dev` (public server)
-   - Or your deployed URL: `https://your-app.fly.dev`
+   - Or enter: `https://clipboard-sync-tool-production.up.railway.app` (public server)
+   - Or your deployed URL: `https://your-app.up.railway.app`
 3. Enter a **Room ID**: `my-clipboard-123` (any unique name)
 4. Click **🔌 Connect**
 
@@ -130,7 +130,7 @@ python main.py
 
 1. **Open your cloud relay URL** in mobile browser
    - From auto-install: Check the desktop app (URL shown)
-   - Public server: `https://clipboard-sync-tool.fly.dev`
+   - Public server: `https://clipboard-sync-tool-production.up.railway.app`
 2. **Enter the SAME Room ID**: `my-clipboard-123`
 3. **Enter device name**: `iPhone` or `Android`
 4. Click **Connect**
@@ -261,21 +261,16 @@ The installer **automatically handles everything**:
 
 If you skipped auto-deployment or want to redeploy:
 
-**Windows:**
-```powershell
-.\deploy-cloud-relay.ps1
-```
-
-**Mac/Linux:**
-```bash
-chmod +x deploy-cloud-relay.sh
-./deploy-cloud-relay.sh
-```
+1. Go to https://railway.app/new
+2. Deploy from GitHub repo
+3. Select `clipboard-sync-tool` repository
+4. Set Root Directory to `cloud-relay` in Settings
+5. Generate Domain to get your URL
 
 ### What Gets Deployed
 
-- **Free Tier**: 160GB bandwidth/month (plenty for clipboard sync!)
-- **Your URL**: `https://clipboard-sync-[random].fly.dev`
+- **Free Tier**: $5 credit/month (~500 hours, 150MB bandwidth/month)
+- **Your URL**: `https://clipboard-sync-tool-production.up.railway.app`
 - **Auto-saved**: Stored in `cloud-relay-config.json`
 - **Auto-loaded**: Pre-filled in the app's Cloud Relay dialog
 
@@ -491,7 +486,7 @@ A: Room ID keeps your devices separate from others using the same relay server. 
 A: Cloud relay: Yes. Local P2P: Usually not (devices isolated on public networks).
 
 **Q: Can I use my own relay server?**  
-A: Yes! Deploy to Railway.app ($5 free credit) via GitHub. See `cloud-relay/README.md` for step-by-step guide
+A: Yes! Deploy to Railway.app ($5 free credit/month) via GitHub in 3 clicks. See `cloud-relay/README.md` for step-by-step guide
 
 **Q: Does mobile app store clipboard history?**  
 A: Yes! Last 10 items shown in "From Desktop" section. Tap any to copy.
@@ -503,8 +498,8 @@ A: Yes! Last 10 items shown in "From Desktop" section. Tap any to copy.
 ### Requirements
 
 - **Desktop**: Python 3.8+
-- **Cloud Relay**: Railway.app account (free trial), GitHub connection
-- **Deployment**: Fly CLI (auto-installed by installer)
+- **Cloud Relay**: Railway.app account ($5 free credit), GitHub connection
+- **Deployment**: GitHub (automatic Railway deployment)
 
 ### Quick Setup
 
@@ -566,8 +561,9 @@ Then open `http://localhost:3000` on mobile.
 After installation, `cloud-relay-config.json` contains your deployment info:
 ```json
 {
-  "cloudRelayUrl": "https://your-app.fly.dev",
-  "deployedAt": "2025-11-22 12:34:56"
+  "cloudRelayUrl": "https://clipboard-sync-tool-production.up.railway.app",
+  "deployedAt": "2025-11-22 12:34:56",
+  "platform": "railway"
 }
 ```
 
