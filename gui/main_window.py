@@ -987,7 +987,7 @@ class MainWindow(QMainWindow):
         show_tab = QWidget()
         show_layout = QVBoxLayout()
         
-        label = QLabel("📱 Scan this QR code from your mobile device")
+        label = QLabel("📱 Pairing Data for P2P Connection")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setStyleSheet("font-size: 14px; font-weight: bold; margin: 10px;")
         show_layout.addWidget(label)
@@ -995,32 +995,48 @@ class MainWindow(QMainWindow):
         # Generate QR code
         qr_label = QLabel()
         qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        qr_label.setMinimumHeight(300)
+        qr_label.setMinimumHeight(200)
         
-        # Info label for connection details
-        info_label = QLabel()
-        info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet("font-size: 11px; color: #666; margin: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;")
+        # JSON data text box (copyable)
+        json_text = QTextEdit()
+        json_text.setReadOnly(True)
+        json_text.setStyleSheet("""
+            QTextEdit {
+                border: 2px solid #4CAF50;
+                border-radius: 5px;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                font-size: 11px;
+                background: #f9f9f9;
+            }
+        """)
+        json_text.setMaximumHeight(150)
         
-        # URL label
-        url_label = QLabel()
-        url_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        url_label.setStyleSheet("font-size: 12px; color: #4CAF50; font-weight: bold; margin: 5px;")
+        # Copy button
+        copy_btn = QPushButton("📋 Copy JSON Data")
+        copy_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
         
-        if self.sync_engine and CORE_AVAILABLE and self.pairing_server:
+        if self.sync_engine and CORE_AVAILABLE:
             try:
-                # Generate mobile-friendly pairing URL
-                pairing_url = self.pairing_server.get_pairing_url()
+                # Generate pairing JSON data
+                pairing_data = self.sync_engine.generate_pairing_qr()
+                json_text.setPlainText(pairing_data)
                 
-                # Show connection info
-                info_text = f"Device: {self.sync_engine.device_name}\nIP: {self.sync_engine.discovery.local_ip}\nPairing Port: 8080"
-                info_label.setText(info_text)
-                url_label.setText(f"🔗 {pairing_url}")
-                
-                # Generate QR code with the pairing URL
-                qr = qrcode.QRCode(version=1, box_size=8, border=4)
-                qr.add_data(pairing_url)
+                # Generate QR code with the JSON
+                qr = qrcode.QRCode(version=1, box_size=6, border=2)
+                qr.add_data(pairing_data)
                 qr.make(fit=True)
                 
                 img = qr.make_image(fill_color="black", back_color="white")
@@ -1032,22 +1048,35 @@ class MainWindow(QMainWindow):
                 
                 pixmap = QPixmap()
                 pixmap.loadFromData(buffer.read())
-                qr_label.setPixmap(pixmap.scaled(280, 280, Qt.AspectRatioMode.KeepAspectRatio))
+                qr_label.setPixmap(pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+                
+                # Copy button functionality
+                def copy_json():
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(pairing_data)
+                    copy_btn.setText("✅ Copied!")
+                    QTimer.singleShot(2000, lambda: copy_btn.setText("📋 Copy JSON Data"))
+                
+                copy_btn.clicked.connect(copy_json)
+                
             except Exception as e:
-                qr_label.setText(f"❌ QR Code generation failed\n\n{str(e)}")
+                qr_label.setText(f"❌ Generation failed\n\n{str(e)}")
                 qr_label.setStyleSheet("color: red;")
-                info_label.setText("Make sure sync engine is running")
+                json_text.setPlainText("Error generating pairing data")
+                copy_btn.setEnabled(False)
         else:
-            qr_label.setText("❌ Network sync not available\n\nCore modules not loaded")
+            qr_label.setText("❌ Network sync not available")
             qr_label.setStyleSheet("color: red;")
-            info_label.setText("Running in simple mode")
+            json_text.setPlainText("Core modules not loaded - running in simple mode")
+            copy_btn.setEnabled(False)
         
         show_layout.addWidget(qr_label)
-        show_layout.addWidget(url_label)
-        show_layout.addWidget(info_label)
+        show_layout.addWidget(QLabel("Copy this JSON and paste on the other computer:"))
+        show_layout.addWidget(json_text)
+        show_layout.addWidget(copy_btn)
         
         # Instructions
-        instructions = QLabel("1. Open camera on your phone\n2. Scan this QR code\n3. Follow pairing steps in browser")
+        instructions = QLabel("1. Click 'Copy JSON Data'\n2. Go to other computer\n3. Click 'Enter QR Data' tab\n4. Paste and click 'Pair'")
         instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
         instructions.setStyleSheet("font-size: 11px; color: #888; margin-top: 10px;")
         show_layout.addWidget(instructions)
@@ -1059,24 +1088,25 @@ class MainWindow(QMainWindow):
         scan_tab = QWidget()
         scan_layout = QVBoxLayout()
         
-        scan_label = QLabel("Enter QR code data from another device")
+        scan_label = QLabel("🔗 Paste Pairing Data from Another Computer")
         scan_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         scan_label.setStyleSheet("font-size: 14px; font-weight: bold; margin: 10px;")
         scan_layout.addWidget(scan_label)
         
-        instructions = QLabel("Paste the QR code data (JSON) below:")
-        instructions.setStyleSheet("color: #666; margin: 5px;")
+        instructions = QLabel("Paste the JSON pairing data from the other device:")
+        instructions.setStyleSheet("color: #666; margin: 5px; font-size: 12px;")
         scan_layout.addWidget(instructions)
         
         qr_input = QTextEdit()
-        qr_input.setPlaceholderText('{"device_id": "...", "device_name": "...", "ip": "...", ...}')
+        qr_input.setPlaceholderText('Paste JSON here:\n{"device_id": "...", "device_name": "...", "ip": "...", "port": ..., "public_key": "...", "timestamp": "..."}')
         qr_input.setStyleSheet("""
             QTextEdit {
-                border: 1px solid #ddd;
-                border-radius: 4px;
+                border: 2px solid #2196F3;
+                border-radius: 5px;
                 padding: 10px;
-                font-family: monospace;
+                font-family: 'Courier New', monospace;
                 font-size: 11px;
+                background: #f9f9f9;
             }
         """)
         scan_layout.addWidget(qr_input)
