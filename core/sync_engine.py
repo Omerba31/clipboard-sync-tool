@@ -74,6 +74,7 @@ class SyncEngine:
         self.discovery.on_device_discovered = self._on_device_discovered
         self.discovery.on_device_lost = self._on_device_lost
         self.p2p.register_handler('clipboard', self._handle_incoming_clipboard)
+        self.p2p.on_device_paired = self._on_device_paired
         
         # Async event loop for P2P
         self.loop = None
@@ -264,9 +265,19 @@ class SyncEngine:
             self.loop
         )
         
-        device.status = DeviceStatus.PAIRED
-        self.paired_devices[device.device_id] = device
-        logger.info(f"Paired with device: {device.name}")
+        # Device will be marked as paired in _on_device_paired callback
+        logger.info(f"Initiating pairing with device: {device.name}")
+    
+    def _on_device_paired(self, device_id: str):
+        """Called when a device successfully pairs (both incoming and outgoing)"""
+        # Find device in discovered devices
+        devices = self.discovery.get_devices()
+        device = next((d for d in devices if d.device_id == device_id), None)
+        
+        if device:
+            device.status = DeviceStatus.PAIRED
+            self.paired_devices[device_id] = device
+            logger.info(f"Device paired: {device.name}")
     
     async def _handle_incoming_clipboard(self, content: bytes, content_type: str, 
                                         device_id: str):

@@ -161,19 +161,35 @@ class NetworkDiscovery(ServiceListener):
         except:
             properties = {}
     
+        # Helper function to safely extract property value
+        def get_property(key):
+            # Try bytes key first
+            value = properties.get(key.encode() if isinstance(key, str) else key)
+            if value is None:
+                # Try string key
+                value = properties.get(key.decode() if isinstance(key, bytes) else key)
+            # Decode if bytes
+            if isinstance(value, bytes):
+                return value.decode('utf-8', errors='ignore')
+            return value if value is not None else ''
+        
         # Skip ourselves
-        device_id = properties.get(b'device_id', b'').decode() if isinstance(properties.get(b'device_id'), bytes) else properties.get('device_id', '')
+        device_id = get_property('device_id')
         if device_id == self.device_id:
             return
+        
+        device_name = get_property('device_name') or 'Unknown Device'
     
         device = Device(
             device_id=device_id or 'unknown',
-            name=properties.get(b'device_name', b'Unknown Device').decode() if isinstance(properties.get(b'device_name'), bytes) else properties.get('device_name', 'Unknown Device'),
+            name=device_name,
             ip_address=socket.inet_ntoa(info.addresses[0]) if info.addresses else '0.0.0.0',
             port=info.port,
             status=DeviceStatus.ONLINE,
             last_seen=datetime.now()
     )
+        
+        logger.debug(f"Processed device - ID: {device.device_id}, Name: '{device.name}', IP: {device.ip_address}")
         
         # Check if already discovered
         if device.device_id not in self.discovered_devices:
@@ -230,6 +246,7 @@ class P2PCommunication:
         self.sio_server.attach(self.app)
         self.message_handlers = {}
         self.runner = None
+        self.on_device_paired = None  # Callback when device pairs
         
         # Setup server handlers
         self._setup_server_handlers()
@@ -268,6 +285,10 @@ class P2PCommunication:
             }, room=sid)
             
             logger.info(f"Paired with device: {device_id}")
+            
+            # Notify that pairing succeeded
+            if self.on_device_paired:
+                self.on_device_paired(device_id)
         
         @self.sio_server.event
         async def clipboard_sync(sid, data):
@@ -356,6 +377,10 @@ class P2PCommunication:
                     data['public_key']
                 )
                 logger.info(f"Pairing accepted by {device.name}")
+                
+                # Notify that pairing succeeded
+                if self.on_device_paired:
+                    self.on_device_paired(device.device_id)
         
         @client.event
         async def clipboard_sync(data):

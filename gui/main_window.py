@@ -9,6 +9,7 @@ import sys
 import os
 import base64
 import io
+import asyncio
 from datetime import datetime
 from typing import Optional
 
@@ -921,9 +922,25 @@ class MainWindow(QMainWindow):
                 if item.widget():
                     item.widget().deleteLater()
             
-            # Add discovered devices
-            discovered = self.sync_engine.get_discovered_devices()
-            for device in discovered:
+            # Get paired and discovered devices
+            paired_devices = self.sync_engine.get_paired_devices()
+            all_discovered = self.sync_engine.get_discovered_devices()
+            paired_ids = {d.device_id for d in paired_devices}
+            
+            # Add paired devices first
+            for device in paired_devices:
+                device_widget = DeviceWidget({'name': device.name, 'status': 'paired', 
+                                             'ip_address': device.ip_address})
+                # Connect disconnect button
+                if hasattr(device_widget, 'pair_btn'):
+                    device_widget.pair_btn.setText('Disconnect')
+                    device_widget.pair_btn.clicked.connect(lambda checked, d=device: self.disconnect_device(d))
+                self.paired_layout.insertWidget(self.paired_layout.count() - 1, device_widget)
+            
+            # Add discovered devices (excluding already paired)
+            for device in all_discovered:
+                if device.device_id in paired_ids:
+                    continue  # Skip devices already in paired list
                 device_widget = DeviceWidget({'name': device.name, 'status': 'discovered', 
                                              'ip_address': device.ip_address})
                 # Connect button directly to pair_device with the actual Device object
@@ -1493,9 +1510,33 @@ class MainWindow(QMainWindow):
                 self.sync_engine._pair_with_device(device)
                 # Get device name - handle both dict and Device object
                 device_name = device.name if hasattr(device, 'name') else device.get('name', 'device')
-                QMessageBox.information(self, "Success", f"Paired with {device_name}")
+                QMessageBox.information(self, "Success", f"Connecting to {device_name}...")
+                # Refresh display after short delay to show pairing status
+                QTimer.singleShot(1000, self.update_devices_display)
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Could not pair: {str(e)}")
+    
+    def disconnect_device(self, device):
+        """Disconnect from a paired device"""
+        if self.sync_engine and CORE_AVAILABLE:
+            try:
+                # Remove from paired devices
+                if device.device_id in self.sync_engine.paired_devices:
+                    del self.sync_engine.paired_devices[device.device_id]
+                
+                # Disconnect the socket connection
+                if device.device_id in self.sync_engine.p2p.sio_clients:
+                    client = self.sync_engine.p2p.sio_clients[device.device_id]
+                    asyncio.run_coroutine_threadsafe(
+                        client.disconnect(),
+                        self.sync_engine.loop
+                    )
+                
+                device_name = device.name if hasattr(device, 'name') else device.get('name', 'device')
+                QMessageBox.information(self, "Disconnected", f"Disconnected from {device_name}")
+                self.update_devices_display()
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Could not disconnect: {str(e)}")
     
     def filter_history(self, text):
         """Filter history based on search text"""
