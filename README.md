@@ -37,10 +37,10 @@ chmod +x install.sh
 
 **What happens:**
 1. ✅ Installs Python dependencies (in isolated `venv/`)
-2. ✅ Auto-installs Fly CLI
-3. ✅ Prompts: "Deploy cloud relay? [y/N]"
-4. ✅ If yes: Deploys to Fly.io & saves your URL
-5. ✅ Shows your cloud relay URL
+2. ✅ Checks for Git and GitHub connection
+3. ✅ Prompts: "Deploy cloud relay to Railway? [y/N]"
+4. ✅ If yes: Guides you through Railway.app deployment
+5. ✅ Saves your cloud relay URL for auto-loading
 
 **Then run:**
 ```bash
@@ -76,9 +76,11 @@ python main.py
 
 **In the app:**
 - Click "☁️ Cloud Relay"
-- Enter URL: `https://clipboard-sync-tool.fly.dev`
+- Enter URL: `https://your-service.up.railway.app` (your deployed service)
 - Enter a Room ID (e.g., `my-room-123`)
 - Connect!
+
+**Don't have a server?** Deploy in 3 clicks - see `cloud-relay/README.md`
 
 ---
 
@@ -251,7 +253,7 @@ The installer **automatically handles everything**:
 
 1. Run `.\install.ps1` (Windows) or `./install.sh` (Mac/Linux)
 2. When prompted: `Deploy [y/N]:` → Type `y`
-3. Browser opens for Fly.io login (free account)
+3. Browser opens for Railway.app - sign in with GitHub
 4. ✅ Your cloud relay is deployed!
 5. ✅ URL is **saved** and **auto-loaded** in the app
 
@@ -324,7 +326,7 @@ chmod +x deploy-cloud-relay.sh
 - **Node.js 18** - Server runtime
 - **Socket.IO 4.6** - Real-time bidirectional sync
 - **Express** - HTTP server
-- **Fly.io** - Free hosting platform
+- **Railway.app** - Hosting platform ($5 free credit/month)
 
 **Mobile Web App:**
 - **Progressive Web App (PWA)** - Install to home screen
@@ -352,7 +354,7 @@ clipboard-sync-tool/
 │   │   ├── app.js                 # Mobile app logic
 │   │   └── manifest.json          # PWA manifest
 │   ├── Dockerfile                 # Container for deployment
-│   ├── fly.toml                   # Fly.io config
+│   ├── railway.json               # Railway.app config
 │   ├── package.json               # Node dependencies
 │   └── README.md                  # Deployment guide
 ├── tests/                         # Organized test suite
@@ -489,7 +491,7 @@ A: Room ID keeps your devices separate from others using the same relay server. 
 A: Cloud relay: Yes. Local P2P: Usually not (devices isolated on public networks).
 
 **Q: Can I use my own relay server?**  
-A: Yes! Deploy to Fly.io (free) with the included scripts. See deploy-cloud-relay.ps1/sh
+A: Yes! Deploy to Railway.app ($5 free credit) via GitHub. See `cloud-relay/README.md` for step-by-step guide
 
 **Q: Does mobile app store clipboard history?**  
 A: Yes! Last 10 items shown in "From Desktop" section. Tap any to copy.
@@ -501,7 +503,7 @@ A: Yes! Last 10 items shown in "From Desktop" section. Tap any to copy.
 ### Requirements
 
 - **Desktop**: Python 3.8+
-- **Cloud Relay**: Node.js 18+, Fly.io account (free)
+- **Cloud Relay**: Railway.app account (free trial), GitHub connection
 - **Deployment**: Fly CLI (auto-installed by installer)
 
 ### Quick Setup
@@ -589,7 +591,7 @@ The app automatically reads this file and pre-fills your URL!
 
 2. **Cloud Relay Deployment**
    - ✅ Prompts for one-click deployment
-   - ✅ Handles Fly.io authentication
+   - ✅ Guides through Railway.app deployment
    - ✅ Deploys to free tier automatically
    - ✅ Generates unique app name
 
@@ -608,7 +610,7 @@ The app automatically reads this file and pre-fills your URL!
 ### What Runs Where
 
 **Cloud Relay (Already Dockerized!)**
-- ✅ Runs on Fly.io in a Docker container automatically
+- ✅ Runs on Railway.app (auto-deploys from GitHub, always-on)
 - ✅ No local Node.js installation needed
 - ✅ Dockerfile already included in `cloud-relay/`
 
@@ -642,7 +644,7 @@ docker-compose up
    pip install -r requirements.txt
    ```
 
-2. **Cloud Relay**: Already runs in Docker on Fly.io
+2. **Cloud Relay**: Already runs on Railway.app (no Docker needed)
    - OR use public server: `https://clipboard-sync-tool.fly.dev`
    - Zero local installation!
 

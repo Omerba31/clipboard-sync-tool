@@ -1,58 +1,47 @@
 # Cloud Relay Deployment Guide
 
-## 🚀 Deploy to Fly.io (FREE)
+## 🚀 Deploy to Railway.app ($5 FREE Credit/Month)
 
 ### Prerequisites
-1. **Create Fly.io account:** https://fly.io/app/sign-up
-2. **Install Fly CLI:**
+1. **Create Railway account:** https://railway.app/
+2. **Sign up with GitHub** (easiest method)
+
+### Deploy in 3 Steps:
+
+1. **Push code to GitHub** (if not already):
    ```bash
-   # Windows (PowerShell)
-   iwr https://fly.io/install.ps1 -useb | iex
-   
-   # Mac/Linux
-   curl -L https://fly.io/install.sh | sh
+   git add .
+   git commit -m "Deploy to Railway"
+   git push
    ```
 
-3. **Login to Fly.io:**
-   ```bash
-   fly auth login
-   ```
+2. **Deploy to Railway:**
+   - Go to https://railway.app/new
+   - Click "Deploy from GitHub repo"
+   - Select `clipboard-sync-tool` repository
+   - Railway auto-detects the Node.js app
+   - Click "Deploy Now"
 
-### Step 1: Deploy the Relay Server
+3. **Configure Service:**
+   - After deployment, click on your service
+   - Go to "Settings" tab
+   - Under "Service" section:
+     - **Root Directory:** Set to `cloud-relay`
+     - **Start Command:** `npm start` (auto-detected)
+   - Click "Generate Domain" to get your public URL
 
-```bash
-# Navigate to cloud-relay directory
-cd cloud-relay
+### Get Your Server URL
 
-# Deploy to Fly.io (first time)
-fly launch
-
-# When prompted:
-# - App name: clipboard-sync-relay (or your choice)
-# - Region: Choose closest to you
-# - PostgreSQL: No
-# - Redis: No
-
-# Deploy
-fly deploy
-
-# Check status
-fly status
-
-# View logs
-fly logs
+After deployment (~1-2 minutes), Railway generates a URL:
+```
+https://clipboard-sync-relay-production.up.railway.app
 ```
 
-### Step 2: Get Your Server URL
-
-After deployment, your server will be at:
-```
-https://clipboard-sync-relay.fly.dev
-```
+Or set a custom domain in Settings → Domains.
 
 Test it:
 ```bash
-curl https://clipboard-sync-relay.fly.dev/health
+curl https://your-service.up.railway.app/health
 ```
 
 ### Step 3: Update Desktop App
@@ -63,7 +52,7 @@ Add cloud relay support to your desktop app (instructions below).
 
 Open on your iPhone:
 ```
-https://clipboard-sync-relay.fly.dev
+https://your-service.up.railway.app
 ```
 
 1. Enter Room ID (any text, e.g., "my-clipboard")
@@ -80,7 +69,7 @@ On your desktop app:
 ## 📱 Using the Mobile Web App
 
 ### First Time Setup:
-1. Open `https://clipboard-sync-relay.fly.dev` in Safari
+1. Open `https://your-service.up.railway.app` in Safari
 2. Enter a **Room ID** (share this with your desktop)
 3. Enter your device name
 4. Click "Connect"
@@ -113,11 +102,18 @@ On your desktop app:
 
 ## 💰 Cost & Limits
 
-**Fly.io Free Tier:**
-- 3 shared-cpu VMs
-- 160GB bandwidth/month
+**Railway.app Hobby Plan:**
+- $5 FREE credit per month (no credit card required for trial)
+- ~500 hours of uptime (about 21 days 24/7)
 - Automatic HTTPS
-- Global CDN
+- No auto-sleep (always-on)
+- Custom domains included
+- After free credit: $5/month for 500 hours
+
+**Cost Estimate:**
+- This lightweight relay uses ~$0.01/hour
+- $5 = ~500 hours = ~21 days continuous uptime
+- For personal use: $5/month covers most needs
 
 **Built-in Protection (Won't Exceed Free Tier):**
 This relay has comprehensive limits to ensure you NEVER go over the free tier:
@@ -154,7 +150,7 @@ This relay has comprehensive limits to ensure you NEVER go over the free tier:
 **Check usage anytime:**
 ```bash
 # View server stats
-curl https://clipboard-sync-relay.fly.dev/stats
+curl https://your-service.up.railway.app/stats
 
 # Response includes:
 # - Active connections
@@ -178,17 +174,18 @@ curl https://clipboard-sync-relay.fly.dev/stats
 ## 🔧 Maintenance
 
 ### View Logs:
-```bash
-fly logs
-```
+- Go to https://railway.app/dashboard
+- Click on your project
+- Select your service
+- Click "Deployments" → View logs
 
-### Check Bandwidth Usage:
+### Check Usage & Costs:
 ```bash
 # See server stats
-curl https://clipboard-sync-relay.fly.dev/stats
+curl https://your-service.up.railway.app/stats
 
-# Or check Fly.io dashboard
-fly dashboard
+# Check Railway usage dashboard
+https://railway.app/account/usage
 ```
 
 ### Adjust Limits (Optional):
@@ -200,53 +197,51 @@ const MAX_MESSAGES_PER_MINUTE = 60;     // Per device
 const BANDWIDTH_LIMIT_MB = 150;         // Monthly bandwidth
 ```
 
-Then redeploy:
+Then push to GitHub (auto-deploys):
 ```bash
-fly deploy
+git add .
+git commit -m "Update limits"
+git push
 ```
 
 ### Scale Up (if needed):
-```bash
-# Add more VMs (uses more resources)
-fly scale count 2
-
-# Increase memory (if needed)
-fly scale memory 512
-```
+- Railway auto-scales based on usage
+- Costs scale with actual usage ($0.01/hour typical)
+- Monitor costs at https://railway.app/account/usage
 
 ### Update Deployment:
 ```bash
 # Make changes to code
-fly deploy
+git add .
+git commit -m "Update"
+git push  # Auto-deploys!
 ```
 
-### Reset Bandwidth Counter:
-```bash
-# Restart the app (resets counter)
-fly apps restart clipboard-sync-relay
+### Manual Restart:
+- Go to https://railway.app/dashboard
+- Click on your service
+- Click "..." menu → "Restart"
 
-# Or redeploy
-fly deploy
-```
-
-### Delete App:
-```bash
-fly apps destroy clipboard-sync-relay
-```
+### Delete Service:
+- Go to https://railway.app/dashboard
+- Click on your project
+- Settings → "Danger" → "Delete Project"
 
 ## 🐛 Troubleshooting
 
 ### Can't Connect from Mobile:
-1. Check server is running: `fly status`
-2. Check logs: `fly logs`
+1. Check service is running in Railway dashboard
+2. Check logs in Railway dashboard
 3. Make sure using HTTPS (not HTTP)
 4. Check if bandwidth limit reached: `/stats`
+5. Verify you have remaining credit (check usage page)
 
 ### Desktop Won't Connect:
 1. Verify Room ID matches mobile
 2. Check firewall isn't blocking connections
 3. Try restarting desktop app
-4. Check server health: `curl https://clipboard-sync-relay.fly.dev/health`
+4. Check server health: `curl https://your-service.up.railway.app/health`
+5. Check Railway service status in dashboard
 
 ### "Disconnected" After Few Minutes:
 - Mobile browser may sleep connection
@@ -257,8 +252,8 @@ fly apps destroy clipboard-sync-relay
 ### "Bandwidth Limit Reached" Error:
 - You've used 150MB this month
 - Wait until next month for automatic reset
-- Or restart app to reset counter: `fly apps restart clipboard-sync-relay`
-- Consider increasing limit in `server.js` if needed
+- Or restart service via Railway dashboard
+- Add more credit at https://railway.app/account/billing
 
 ### "Rate Limit Exceeded":
 - Sending too fast (max 60 messages/minute)
@@ -269,14 +264,15 @@ fly apps destroy clipboard-sync-relay
 - Max 50 simultaneous devices
 - Disconnect unused devices
 - Check for stuck connections in logs
-- Restart server: `fly apps restart clipboard-sync-relay`
+- Restart service via Railway dashboard
 
 ### Messages Not Syncing:
 1. Check Room ID matches on all devices
-2. Verify server is running: `fly status`
+2. Verify service is running in Railway dashboard
 3. Check message size (max 100KB)
 4. Check bandwidth usage: `/stats`
-5. Look at logs: `fly logs`
+5. Look at logs in Railway dashboard
+6. Check you have remaining Railway credit
 
 ### High Bandwidth Usage:
 - Check what you're syncing (images? large code?)
@@ -286,14 +282,21 @@ fly apps destroy clipboard-sync-relay
 
 ## 📊 Monitoring
 
-Check your app status:
-```bash
-fly status
-fly logs
-fly dashboard
-```
+**Railway Dashboard:** https://railway.app/dashboard
 
-Or visit: https://fly.io/dashboard
+From the dashboard you can:
+- View real-time logs
+- Check usage and costs
+- Monitor uptime and metrics
+- See deployment history
+- Configure environment variables
+- Manual deploy/restart
+
+**Usage Tracking:** https://railway.app/account/usage
+- See current month's usage
+- Remaining free credit
+- Estimated costs
+- Historical usage
 
 ## 🎯 Next Steps
 
@@ -326,9 +329,25 @@ This ensures even the relay server can't read your clipboard!
 ## 📞 Support
 
 If you encounter issues:
-1. Check Fly.io docs: https://fly.io/docs
-2. Check server logs: `fly logs`
-3. Open GitHub issue
+1. Check Railway docs: https://docs.railway.app/
+2. Check server logs in dashboard
+3. Check Railway status: https://railway.statuspage.io/
+4. Railway Discord: https://discord.gg/railway
+5. Open GitHub issue
+
+## ⚡ Performance Notes
+
+**Always-On Service:**
+- Railway services don't auto-sleep
+- Instant connections (no cold starts)
+- Pay only for actual usage
+- Typical cost: $0.01/hour = ~$7/month for 24/7 uptime
+
+**Cost Optimization:**
+- Free $5 credit covers ~500 hours (~21 days)
+- For occasional use: Pause service when not needed
+- Service settings → "Pause" to stop billing
+- Resume when needed (instant startup)
 
 ---
 
