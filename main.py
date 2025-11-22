@@ -89,6 +89,22 @@ def check_dependencies():
         return False
     return True
 
+def load_cloud_relay_config():
+    """Load cloud relay config if available"""
+    config_path = os.path.join(os.path.dirname(__file__), 'cloud-relay-config.json')
+    if os.path.exists(config_path):
+        try:
+            import json
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                url = config.get('cloudRelayUrl')
+                if url:
+                    print(f"[INFO] Found deployed cloud relay: {url}")
+                    return url
+        except Exception as e:
+            logger.debug(f"Could not load cloud relay config: {e}")
+    return None
+
 def run_gui():
     """Run the GUI application"""
     try:
@@ -115,6 +131,13 @@ def run_gui():
     
     try:
         window = MainWindow()
+        
+        # Auto-populate cloud relay URL if deployed
+        cloud_url = load_cloud_relay_config()
+        if cloud_url and hasattr(window, 'cloud_url_input'):
+            window.cloud_url_input.setText(cloud_url)
+            print(f"[INFO] Auto-filled cloud relay URL: {cloud_url}")
+        
         window.show()
         sys.exit(app.exec())
     except Exception as e:

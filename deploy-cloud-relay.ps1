@@ -9,58 +9,57 @@ Write-Host ""
 # Check if Fly CLI is installed
 Write-Host "Checking Fly CLI..." -ForegroundColor Yellow
 
-# Check common installation locations
-$flyPaths = @(
-    "fly",  # Check PATH first
-    "$env:USERPROFILE\.fly\bin\flyctl.exe",
-    "C:\Program Files\fly\bin\flyctl.exe"
-)
-
+# Try different commands (flyctl is more reliable than fly on Windows)
 $flyCmd = $null
-foreach ($path in $flyPaths) {
-    if ($path -eq "fly") {
-        if (Get-Command fly -ErrorAction SilentlyContinue) {
-            $flyCmd = "fly"
+$commands = @("flyctl", "fly")
+
+foreach ($cmd in $commands) {
+    try {
+        $testOutput = & $cmd version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $flyCmd = $cmd
+            Write-Host "✅ Fly CLI found: $cmd" -ForegroundColor Green
             break
         }
-    } elseif (Test-Path $path) {
-        $flyCmd = $path
-        break
+    } catch {
+        # Command not found, try next one
+        continue
     }
 }
 
-if ($flyCmd) {
-    $flyVersion = & $flyCmd version 2>&1
-    Write-Host "✅ Fly CLI found: $flyVersion" -ForegroundColor Green
-} else {
-    Write-Host "❌ Fly CLI not found" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Would you like to install Fly CLI now? (requires admin)" -ForegroundColor Yellow
-    $response = Read-Host "Install Fly CLI? (y/n)"
-    
-    if ($response -eq 'y' -or $response -eq 'Y') {
-        Write-Host "Installing Fly CLI..." -ForegroundColor Cyan
+if (-not $flyCmd) {
+    # Try direct path
+    $directPath = "$env:USERPROFILE\.fly\bin\flyctl.exe"
+    if (Test-Path $directPath) {
         try {
-            iwr https://fly.io/install.ps1 -useb | iex
-            Write-Host "✅ Fly CLI installed!" -ForegroundColor Green
-            
-            # Try to find it again
-            $flyCmd = "$env:USERPROFILE\.fly\bin\flyctl.exe"
-            if (Test-Path $flyCmd) {
-                Write-Host "✅ Found Fly CLI at: $flyCmd" -ForegroundColor Green
-            } else {
-                Write-Host "⚠️  Please restart PowerShell and run this script again" -ForegroundColor Yellow
-                exit 0
+            # Test if we can execute it
+            $testOutput = & $directPath version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $flyCmd = $directPath
+                Write-Host "✅ Fly CLI found at: $directPath" -ForegroundColor Green
             }
         } catch {
-            Write-Host "❌ Failed to install Fly CLI" -ForegroundColor Red
-            Write-Host "Please install manually: https://fly.io/docs/hands-on/install-flyctl/" -ForegroundColor Gray
-            exit 1
+            Write-Host "⚠️  Fly CLI found but cannot execute (permission issue)" -ForegroundColor Yellow
         }
-    } else {
-        Write-Host "Please install Fly CLI manually: https://fly.io/docs/hands-on/install-flyctl/" -ForegroundColor Gray
-        exit 1
     }
+}
+
+if (-not $flyCmd) {
+    Write-Host "❌ Fly CLI not found or not accessible" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "🔧 Troubleshooting Steps:" -ForegroundColor Yellow
+    Write-Host "1. Close ALL PowerShell windows" -ForegroundColor White
+    Write-Host "2. Open a NEW PowerShell window (as Administrator if needed)" -ForegroundColor White
+    Write-Host "3. Run: flyctl version" -ForegroundColor White
+    Write-Host ""
+    Write-Host "If 'flyctl' command not found:" -ForegroundColor Yellow
+    Write-Host "Install with: iwr https://fly.io/install.ps1 -useb | iex" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "If 'Access Denied' error:" -ForegroundColor Yellow
+    Write-Host "- Run PowerShell as Administrator, OR" -ForegroundColor White
+    Write-Host "- Unblock the file: Unblock-File `$env:USERPROFILE\.fly\bin\flyctl.exe" -ForegroundColor White
+    Write-Host ""
+    exit 1
 }
 
 # Check if user is logged in

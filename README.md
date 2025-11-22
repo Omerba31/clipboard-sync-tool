@@ -16,9 +16,14 @@
 
 ## ⚡ Quick Start
 
-### 1️⃣ Install Desktop App
+### Choose Your Setup:
+
+#### 🚀 **Option A: Automated Install (Recommended)**
+
+Everything set up automatically with one command!
 
 ```bash
+# Clone the repository
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
 
@@ -28,43 +33,161 @@ cd clipboard-sync-tool
 # Mac/Linux
 chmod +x install.sh
 ./install.sh
+```
+
+**What happens:**
+1. ✅ Installs Python dependencies (in isolated `venv/`)
+2. ✅ Auto-installs Fly CLI
+3. ✅ Prompts: "Deploy cloud relay? [y/N]"
+4. ✅ If yes: Deploys to Fly.io & saves your URL
+5. ✅ Shows your cloud relay URL
+
+**Then run:**
+```bash
+python main.py
+```
+
+Your URL is **auto-loaded** in the app! Just enter a Room ID and connect.
+
+---
+
+#### 🎯 **Option B: Use Public Server (No Deployment)**
+
+Skip deployment and use the public cloud relay:
+
+```bash
+# Clone and install Python deps only
+git clone https://github.com/Omerba31/clipboard-sync-tool.git
+cd clipboard-sync-tool
+
+# Create virtual environment
+python -m venv venv
+
+# Activate it
+venv\Scripts\activate     # Windows
+source venv/bin/activate  # Mac/Linux
+
+# Install dependencies
+pip install -r requirements.txt
 
 # Run the app
 python main.py
 ```
 
-### 2️⃣ Connect Mobile Device
+**In the app:**
+- Click "☁️ Cloud Relay"
+- Enter URL: `https://clipboard-sync-tool.fly.dev`
+- Enter a Room ID (e.g., `my-room-123`)
+- Connect!
 
-**🌐 Cloud Relay (Recommended - Works Anywhere)**
+---
 
-1. **Desktop**: Click **☁️ Cloud Relay** button
-   - Enter URL: `https://clipboard-sync-tool.fly.dev`
-   - Enter Room ID: `your-unique-room-name`
-   - Click Connect
+#### 🐳 **Option C: Docker (Development Only)**
 
-2. **Mobile**: Open `https://clipboard-sync-tool.fly.dev` in browser
-   - Enter same Room ID
-   - Enter device name (e.g., "iPhone")
-   - Click Connect
+Run cloud relay locally for development:
 
-3. **Done!** Now you can:
-   - ✅ Copy on desktop → Tap item on mobile to paste
-   - ✅ Type on mobile → Send to desktop clipboard
-   - ✅ See all synced items in history
+```bash
+# Run just the cloud relay
+cd cloud-relay
+docker build -t clipboard-relay .
+docker run -p 3000:8080 clipboard-relay
 
-### 3️⃣ Desktop-to-Desktop (Same Wi-Fi)
+# Or use docker-compose for full stack
+docker-compose up
+```
+
+**Note:** Desktop GUI doesn't work in Docker. Use this for:
+- Local cloud relay development
+- Testing the relay server
+- Custom deployments
+
+Then run the desktop app normally:
+```bash
+python main.py
+# Use URL: http://localhost:3000
+```
+
+### Connect Mobile & Desktop
+
+#### **Step 1: Start Desktop App**
+
+```bash
+python main.py
+```
+
+#### **Step 2: Connect to Cloud Relay**
+
+1. Click **☁️ Cloud Relay** button in the app
+2. The URL is **auto-filled** if you used automated install!
+   - Or enter: `https://clipboard-sync-tool.fly.dev` (public server)
+   - Or your deployed URL: `https://your-app.fly.dev`
+3. Enter a **Room ID**: `my-clipboard-123` (any unique name)
+4. Click **🔌 Connect**
+
+#### **Step 3: Connect Mobile Device**
+
+1. **Open your cloud relay URL** in mobile browser
+   - From auto-install: Check the desktop app (URL shown)
+   - Public server: `https://clipboard-sync-tool.fly.dev`
+2. **Enter the SAME Room ID**: `my-clipboard-123`
+3. **Enter device name**: `iPhone` or `Android`
+4. Click **Connect**
+
+#### **Step 4: Start Syncing! 🎉**
+
+- ✅ **Desktop → Mobile**: Copy anything on desktop, tap it on mobile to paste
+- ✅ **Mobile → Desktop**: Type/paste on mobile, click "📤 Send to Desktop"
+- ✅ **Images**: Supported (up to 5MB)
+- ✅ **History**: View all synced items in the History tab
+
+> 💡 **Tip**: Use the same Room ID on all your devices to sync between them!
+
+### Desktop-to-Desktop (Optional - Local Network)
+
+For **same Wi-Fi** encrypted sync without cloud:
 
 **📱 Local P2P Mode**
 
-1. **Computer 1**: Click **📱 Local P2P** → Show QR code
-2. **Computer 2**: Click **📱 Local P2P** → Enter QR Data tab → Paste data → Pair
-3. **Done!** Clipboards stay in sync with end-to-end encryption
+1. **Computer 1**: 
+   - Click **📱 Local P2P** 
+   - Click **Show QR** tab
+   - Show QR code on screen
+
+2. **Computer 2**: 
+   - Click **📱 Local P2P**
+   - Click **Enter QR Data** tab
+   - Paste the QR data
+   - Click **Pair**
+
+3. **Done!** 
+   - ✅ End-to-end encrypted
+   - ✅ Works offline (same network)
+   - ✅ No cloud relay needed
 
 ---
 
 ## 📖 How to Use
 
-### Mobile Web App Features
+### 🎮 Command Line Options
+
+```bash
+# GUI mode (default) - Full desktop interface
+python main.py
+
+# CLI mode - Headless background sync
+python main.py --mode cli --name "MyComputer"
+
+# Simple mode - Basic clipboard monitor only
+python main.py --mode simple
+
+# Debug mode - Detailed logging
+python main.py --debug
+
+# Check dependencies
+python main.py --check
+```
+
+### 📱 Mobile Web App Features
 
 **Sending to Desktop:**
 1. On mobile, type or paste content in the text box
@@ -84,20 +207,20 @@ python main.py
 - See all devices synced to the same Room ID
 - Desktop and other mobile devices shown with icons
 
-### Desktop App Features
+### 🖥️ Desktop App Features
 
-**Dashboard Tab:**
+**📊 Dashboard Tab:**
 - View total syncs, active devices, and recent activity
 - Real-time statistics
 
-**History Tab:**
-- 📜 View all synced clipboard items
+**📜 History Tab:**
+- View all synced clipboard items
 - 🔍 Search by content
 - 🏷️ Filter by type (Text, Images, URLs, Code)
 - 📋 Click any item to copy it back to clipboard
 
-**Devices Tab:**
-- ☁️ **Cloud Relay Status** - Shows connection state with visual feedback
+**🖥️ Devices Tab:**
+- ☁️ **Cloud Relay Status** - Shows connection state
   - 🟢 Green = Connected to cloud relay
   - 🟠 Orange = Not connected
   - Shows server URL and Room ID when connected
@@ -106,17 +229,35 @@ python main.py
   - Shows discovered and paired devices
   - Connect for encrypted P2P sync
 
-**Settings Tab:**
+**⚙️ Settings Tab:**
 - Configure auto-sync behavior
 - Choose content types to sync
 - Set size limits
 - Customize device name
 
+### ⚡ Quick Actions (Header)
+
+- **⏸️ Pause** - Temporarily stop syncing
+- **📱 Local P2P** - Connect to nearby devices (QR code)
+- **☁️ Cloud Relay** - Connect to internet-based sync
+
 ---
 
-## 🚀 Deploy Your Own Cloud Relay (Optional)
+## 🚀 Cloud Relay Deployment (Now Automatic!)
 
-Want to host your own relay server? It's **FREE** on Fly.io!
+### Automatic During Installation (Recommended)
+
+The installer **automatically handles everything**:
+
+1. Run `.\install.ps1` (Windows) or `./install.sh` (Mac/Linux)
+2. When prompted: `Deploy [y/N]:` → Type `y`
+3. Browser opens for Fly.io login (free account)
+4. ✅ Your cloud relay is deployed!
+5. ✅ URL is **saved** and **auto-loaded** in the app
+
+### Manual Deployment (If Needed)
+
+If you skipped auto-deployment or want to redeploy:
 
 **Windows:**
 ```powershell
@@ -129,29 +270,14 @@ chmod +x deploy-cloud-relay.sh
 ./deploy-cloud-relay.sh
 ```
 
-The script will:
-- ✅ Install Fly CLI (if not already installed)
-- ✅ Authenticate with Fly.io
-- ✅ Deploy your cloud relay
-- ✅ Give you your custom URL
+### What Gets Deployed
 
-**If Fly CLI is installed but not recognized:**
+- **Free Tier**: 160GB bandwidth/month (plenty for clipboard sync!)
+- **Your URL**: `https://clipboard-sync-[random].fly.dev`
+- **Auto-saved**: Stored in `cloud-relay-config.json`
+- **Auto-loaded**: Pre-filled in the app's Cloud Relay dialog
 
-Windows (PowerShell - restart terminal or run):
-```powershell
-$env:Path += ";$env:USERPROFILE\.fly\bin"
-```
-
-Mac/Linux (add to ~/.bashrc or ~/.zshrc):
-```bash
-export PATH="$HOME/.fly/bin:$PATH"
-```
-
-Then close and reopen your terminal, or run `source ~/.bashrc` (Mac/Linux).
-
-Then use your own URL instead of the public one!
-
-> 💡 **Fly.io Free Tier**: 160GB bandwidth/month, plenty for clipboard sync
+> 💡 **No configuration needed** - the app reads your URL automatically!
 
 ---
 
@@ -376,24 +502,29 @@ A: Yes! Last 10 items shown in "From Desktop" section. Tap any to copy.
 
 - **Desktop**: Python 3.8+
 - **Cloud Relay**: Node.js 18+, Fly.io account (free)
+- **Deployment**: Fly CLI (auto-installed by installer)
 
-### Running Tests
-
-```bash
-# All tests
-python -m pytest tests/
-
-# Specific test
-python tests/test_pairing_server.py
-```
-
-### Development Setup
+### Quick Setup
 
 ```bash
 # Clone repo
 git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
 
+# Run the automated installer
+.\install.ps1          # Windows
+./install.sh           # Mac/Linux
+
+# Answer 'y' when prompted to deploy
+# Everything will be set up automatically!
+
+# Run app
+python main.py
+```
+
+### Manual Setup (Advanced)
+
+```bash
 # Create virtual environment
 python -m venv venv
 
@@ -408,6 +539,16 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Running Tests
+
+```bash
+# All tests
+python -m pytest tests/
+
+# Specific test
+python tests/test_pairing_server.py
+```
+
 ### Local Cloud Relay Development
 
 ```bash
@@ -418,12 +559,96 @@ node server.js
 
 Then open `http://localhost:3000` on mobile.
 
+### Project Configuration
+
+After installation, `cloud-relay-config.json` contains your deployment info:
+```json
+{
+  "cloudRelayUrl": "https://your-app.fly.dev",
+  "deployedAt": "2025-11-22 12:34:56"
+}
+```
+
+The app automatically reads this file and pre-fills your URL!
+
 ---
 
 ## 📚 Additional Documentation
 
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Detailed troubleshooting guide
 - [cloud-relay/README.md](cloud-relay/README.md) - Cloud relay deployment & API
+
+## 🎯 Key Features of the Automated Setup
+
+### What the Installer Does Automatically:
+
+1. **Dependency Management**
+   - ✅ Checks for Python, Node.js, Fly CLI
+   - ✅ Auto-installs Fly CLI if missing
+   - ✅ Installs all required packages
+
+2. **Cloud Relay Deployment**
+   - ✅ Prompts for one-click deployment
+   - ✅ Handles Fly.io authentication
+   - ✅ Deploys to free tier automatically
+   - ✅ Generates unique app name
+
+3. **Configuration Management**
+   - ✅ Saves your deployed URL to `cloud-relay-config.json`
+   - ✅ App auto-loads URL on startup
+   - ✅ Pre-fills Cloud Relay connection dialog
+
+4. **Zero Manual Configuration**
+   - ✅ No URL copying needed
+   - ✅ No manual file editing
+   - ✅ Just enter a Room ID and connect!
+
+## 🐳 Docker Deployment (Alternative)
+
+### What Runs Where
+
+**Cloud Relay (Already Dockerized!)**
+- ✅ Runs on Fly.io in a Docker container automatically
+- ✅ No local Node.js installation needed
+- ✅ Dockerfile already included in `cloud-relay/`
+
+**Desktop App (Optional Docker)**
+
+The desktop app uses Python and needs GUI access, so it's best run natively. However, for development/testing:
+
+```bash
+# Run cloud relay locally with Docker
+cd cloud-relay
+docker build -t clipboard-relay .
+docker run -p 3000:8080 clipboard-relay
+
+# Or use docker-compose for full stack
+docker-compose up
+```
+
+**Note**: The desktop app's GUI won't work inside Docker. Docker is mainly useful for:
+- Running the cloud relay locally for development
+- Testing the sync engine in CLI mode
+- Deploying to custom cloud providers
+
+### Minimal Local Installation
+
+**Don't want anything on your computer?**
+
+1. **Desktop App**: Use Python venv (isolated, deletable)
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate  # Windows
+   pip install -r requirements.txt
+   ```
+
+2. **Cloud Relay**: Already runs in Docker on Fly.io
+   - OR use public server: `https://clipboard-sync-tool.fly.dev`
+   - Zero local installation!
+
+3. **Clean Up**: Just delete the project folder
+   - Everything is in `venv/` (isolated)
+   - No system-wide installation needed
 
 ---
 

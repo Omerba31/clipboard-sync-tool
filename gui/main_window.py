@@ -1193,6 +1193,21 @@ class MainWindow(QMainWindow):
         
         self.cloud_url_input = QLineEdit()
         self.cloud_url_input.setPlaceholderText("https://your-app.fly.dev")
+        
+        # Auto-load deployed URL if available
+        import json
+        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'cloud-relay-config.json')
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    url = config.get('cloudRelayUrl')
+                    if url:
+                        self.cloud_url_input.setText(url)
+                        print(f"[INFO] Auto-loaded cloud relay URL: {url}")
+            except Exception as e:
+                pass
+        
         self.cloud_url_input.setStyleSheet("""
             QLineEdit {
                 padding: 12px;
