@@ -23,26 +23,14 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
     $hasNode = $false
 }
 
-# Check Fly CLI
-Write-Host "Checking Fly CLI..." -ForegroundColor Yellow
-if (Get-Command fly -ErrorAction SilentlyContinue) {
-    Write-Host "✅ Fly CLI found" -ForegroundColor Green
-    $hasFly = $true
+# Check Git (needed for Railway deployment)
+Write-Host "Checking Git..." -ForegroundColor Yellow
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    Write-Host "✅ Git found" -ForegroundColor Green
+    $hasGit = $true
 } else {
-    Write-Host "⚠️ Fly CLI not found" -ForegroundColor Yellow
-    Write-Host "   Installing Fly CLI..." -ForegroundColor Yellow
-    try {
-        iwr https://fly.io/install.ps1 -useb | iex
-        # Update PATH for current session
-        $env:Path += ";$env:USERPROFILE\.fly\bin"
-        Write-Host "✅ Fly CLI installed successfully" -ForegroundColor Green
-        $hasFly = $true
-    } catch {
-        Write-Host "⚠️ Could not install Fly CLI automatically" -ForegroundColor Yellow
-        Write-Host "   You can install it manually later with:" -ForegroundColor Yellow
-        Write-Host "   iwr https://fly.io/install.ps1 -useb | iex" -ForegroundColor Cyan
-        $hasFly = $false
-    }
+    Write-Host "⚠️ Git not found (needed for Railway deployment)" -ForegroundColor Yellow
+    $hasGit = $false
 }
 
 Write-Host ""
@@ -57,96 +45,74 @@ if ($hasNode) {
     Pop-Location
 }
 
-# Auto-deploy to Fly.io if both Node.js and Fly CLI are available
+# Prompt for Railway deployment
 $deployedUrl = $null
-if ($hasNode -and $hasFly) {
+if ($hasNode -and $hasGit) {
     Write-Host ""
     Write-Host "================================" -ForegroundColor Cyan
-    Write-Host "Auto-Deploying Cloud Relay" -ForegroundColor Cyan
+    Write-Host "Deploy Cloud Relay to Railway?" -ForegroundColor Cyan
     Write-Host "================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Would you like to deploy the cloud relay to Fly.io now? (y/n)" -ForegroundColor Yellow
+    Write-Host "Would you like to deploy the cloud relay to Railway.app now? (y/n)" -ForegroundColor Yellow
     Write-Host "(This enables mobile device sync over the internet)" -ForegroundColor Gray
+    Write-Host "Railway offers $5 free credit/month (no credit card needed)" -ForegroundColor Gray
     $deployResponse = Read-Host "Deploy"
     
-    if ($deployResponse -eq 'y' -or $deployResponse -eq 'Y' -or $deployResponse -eq '') {
+    if ($deployResponse -eq 'y' -or $deployResponse -eq 'Y') {
         Write-Host ""
-        Write-Host "Deploying to Fly.io..." -ForegroundColor Cyan
+        Write-Host "Railway Deployment Steps:" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "1. Push your code to GitHub (if not already):" -ForegroundColor Yellow
+        Write-Host "   git add ." -ForegroundColor White
+        Write-Host "   git commit -m 'Deploy to Railway'" -ForegroundColor White
+        Write-Host "   git push" -ForegroundColor White
+        Write-Host ""
+        Write-Host "2. Go to: https://railway.app/new" -ForegroundColor Yellow
+        Write-Host "   - Click 'Deploy from GitHub repo'" -ForegroundColor White
+        Write-Host "   - Select your clipboard-sync-tool repository" -ForegroundColor White
+        Write-Host "   - Click 'Deploy Now'" -ForegroundColor White
+        Write-Host ""
+        Write-Host "3. Configure your service:" -ForegroundColor Yellow
+        Write-Host "   - Click on your service" -ForegroundColor White
+        Write-Host "   - Go to Settings tab" -ForegroundColor White
+        Write-Host "   - Set Root Directory: cloud-relay" -ForegroundColor White
+        Write-Host "   - Click 'Generate Domain'" -ForegroundColor White
+        Write-Host ""
+        Write-Host "4. Save your URL:" -ForegroundColor Yellow
+        Write-Host "   - Copy the generated domain (e.g., yourapp.up.railway.app)" -ForegroundColor White
+        Write-Host "   - It will be auto-loaded in the desktop app!" -ForegroundColor White
+        Write-Host ""
+        Write-Host "Press Enter to open Railway deployment page..." -ForegroundColor Cyan
+        Read-Host
+        Start-Process "https://railway.app/new"
+        Write-Host ""
+        Write-Host "After deployment, enter your Railway URL to save it:" -ForegroundColor Yellow
+        $railwayUrl = Read-Host "Railway URL (or press Enter to skip)"
         
-        # Use flyctl instead of fly for better compatibility
-        $flyCmd = "flyctl"
-        if (-not (Get-Command flyctl -ErrorAction SilentlyContinue)) {
-            $flyCmd = "$env:USERPROFILE\.fly\bin\flyctl.exe"
-        }
-        
-        # Check authentication
-        Write-Host "Checking Fly.io authentication..." -ForegroundColor Yellow
-        $authCheck = & $flyCmd auth whoami 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Opening browser for Fly.io login..." -ForegroundColor Cyan
-            & $flyCmd auth login
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Authenticated" -ForegroundColor Green
-            Write-Host ""
-            
-            # Navigate to cloud-relay and deploy
-            Push-Location cloud-relay
-            
-            # Check if already configured
-            $flyToml = Get-Content "fly.toml" -ErrorAction SilentlyContinue
-            if ($flyToml -match 'app\s*=\s*"([^"]+)"') {
-                $appName = $matches[1]
-                Write-Host "Found existing app: $appName" -ForegroundColor Cyan
-                Write-Host "Deploying update..." -ForegroundColor Yellow
-                & $flyCmd deploy --yes 2>&1 | Out-Host
-            } else {
-                Write-Host "Creating new app..." -ForegroundColor Yellow
-                Write-Host ""
-                # Launch with defaults
-                & $flyCmd launch --yes --name "clipboard-sync-$([System.Guid]::NewGuid().ToString().Substring(0,8))" --region sjc 2>&1 | Out-Host
+        if ($railwayUrl) {
+            # Ensure URL has https://
+            if ($railwayUrl -notmatch '^https?://') {
+                $railwayUrl = "https://$railwayUrl"
             }
             
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host ""
-                Write-Host "✅ Deployment successful!" -ForegroundColor Green
-                
-                # Get the deployed URL
-                $statusOutput = & $flyCmd status 2>&1
-                if ($statusOutput -match 'https://([^\s]+\.fly\.dev)') {
-                    $deployedUrl = $matches[1]
-                    Write-Host ""
-                    Write-Host "🌐 Your Cloud Relay URL: https://$deployedUrl" -ForegroundColor Green
-                    Write-Host ""
-                    
-                    # Save URL to config file
-                    $config = @{
-                        cloudRelayUrl = "https://$deployedUrl"
-                        deployedAt = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-                    }
-                    $config | ConvertTo-Json | Out-File "..\cloud-relay-config.json" -Encoding UTF8
-                    Write-Host "✅ URL saved to cloud-relay-config.json" -ForegroundColor Green
-                } else {
-                    # Try alternative method to get URL
-                    $infoOutput = & $flyCmd apps list 2>&1
-                    Write-Host ""
-                    Write-Host "App deployed! Check the hostname above." -ForegroundColor Green
-                }
-            } else {
-                Write-Host ""
-                Write-Host "⚠️  Deployment had issues, but may have succeeded" -ForegroundColor Yellow
-                Write-Host "   Run: flyctl status (in cloud-relay folder)" -ForegroundColor Gray
+            # Save URL to config file
+            $config = @{
+                cloudRelayUrl = $railwayUrl
+                deployedAt = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+                platform = "railway"
             }
-            
-            Pop-Location
-        } else {
-            Write-Host "⚠️  Authentication failed, skipping deployment" -ForegroundColor Yellow
+            $config | ConvertTo-Json | Out-File "cloud-relay-config.json" -Encoding UTF8
+            Write-Host "✅ URL saved to cloud-relay-config.json" -ForegroundColor Green
+            $deployedUrl = $railwayUrl
         }
     } else {
         Write-Host "Skipping cloud relay deployment" -ForegroundColor Gray
-        Write-Host "You can deploy later with: .\deploy-cloud-relay.ps1" -ForegroundColor Gray
+        Write-Host "You can deploy later - see: cloud-relay/README.md" -ForegroundColor Gray
     }
+} elseif (-not $hasGit) {
+    Write-Host ""
+    Write-Host "⚠️  Git not found - needed for Railway deployment" -ForegroundColor Yellow
+    Write-Host "   Install Git from: https://git-scm.com/downloads" -ForegroundColor Gray
 }
 
 Write-Host ""
@@ -157,9 +123,10 @@ Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Run the desktop app: python main.py" -ForegroundColor White
 if ($deployedUrl) {
-    Write-Host "  2. Open on mobile: https://$deployedUrl" -ForegroundColor White
+    Write-Host "  2. Open on mobile: $deployedUrl" -ForegroundColor White
     Write-Host "  3. Enter same Room ID on both devices" -ForegroundColor White
-} elseif ($hasFly) {
-    Write-Host "  2. Deploy cloud relay: .\deploy-cloud-relay.ps1" -ForegroundColor White
+} else {
+    Write-Host "  2. Deploy cloud relay: See cloud-relay/README.md" -ForegroundColor White
+    Write-Host "     Quick: https://railway.app/new" -ForegroundColor Gray
 }
 Write-Host ""
