@@ -9,6 +9,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     xvfb \
     x11-utils \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
@@ -16,6 +17,9 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Linux-specific Python dependencies
+RUN pip install --no-cache-dir python-magic>=0.4.27
 
 # Copy application files
 COPY . .
