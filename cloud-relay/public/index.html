@@ -327,6 +327,7 @@
         <div class="status">
             <div class="status-indicator" id="statusIndicator"></div>
             <span id="statusText">Connecting...</span>
+            <span id="encryptionStatus" style="margin-left: auto; font-size: 0.9em;">🔐 E2E</span>
         </div>
 
         <div class="card">
@@ -368,7 +369,9 @@
         <div class="modal-content">
             <h2 style="margin-bottom: 20px; text-align: center;">🔗 Connect to Cloud</h2>
             <input type="text" id="roomIdInput" placeholder="Enter Room ID" />
+            <input type="password" id="roomPasswordInput" placeholder="Password (optional, for encryption)" />
             <input type="text" id="deviceNameInput" placeholder="Your Device Name (e.g., iPhone)" />
+            <p style="font-size: 0.8em; color: #888; margin-bottom: 15px; text-align: center;">🔐 End-to-end encrypted. Server can't read your data.</p>
             <button class="button button-primary" onclick="connect()">Connect</button>
         </div>
     </div>
@@ -377,6 +380,7 @@
     <div id="notification" class="notification"></div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/crypto.js"></script>
     <script src="/app.js"></script>
 </body>
 </html>

@@ -5,6 +5,8 @@ let deviceName = null;
 let deviceId = null;
 let clipboardHistory = [];
 let selectedImage = null; // Store selected image data
+let encryptionEnabled = true; // E2E encryption on by default
+let roomPassword = ''; // Optional password for extra security
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,10 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
         document.getElementById('roomIdInput').value = saved.roomId;
         document.getElementById('deviceNameInput').value = saved.deviceName;
+        if (saved.password) {
+            const passwordInput = document.getElementById('roomPasswordInput');
+            if (passwordInput) passwordInput.value = saved.password;
+        }
         
         // Auto-connect if credentials exist
         roomId = saved.roomId;
         deviceName = saved.deviceName;
+        roomPassword = saved.password || '';
         deviceId = 'mobile-' + Math.random().toString(36).substr(2, 9);
         
         // Hide modal and connect
@@ -65,6 +72,8 @@ function handlePaste(event) {
 function connect() {
     roomId = document.getElementById('roomIdInput').value.trim();
     deviceName = document.getElementById('deviceNameInput').value.trim();
+    const passwordInput = document.getElementById('roomPasswordInput');
+    roomPassword = passwordInput ? passwordInput.value : '';
 
     if (!roomId || !deviceName) {
         showNotification('⚠️ Please enter Room ID and Device Name', 'error');
@@ -75,7 +84,7 @@ function connect() {
     deviceId = 'mobile-' + Math.random().toString(36).substr(2, 9);
 
     // Save credentials
-    saveCredentials(roomId, deviceName);
+    saveCredentials(roomId, deviceName, roomPassword);
 
     // Close modal
     document.getElementById('connectionModal').classList.remove('show');
@@ -84,8 +93,19 @@ function connect() {
     connectToServer();
 }
 
-function connectToServer() {
+async function connectToServer() {
     updateStatus('Connecting...', false);
+    
+    // Initialize encryption
+    if (encryptionEnabled && typeof clipboardCrypto !== 'undefined') {
+        try {
+            await clipboardCrypto.init(roomId, roomPassword);
+            console.log('[🔐] E2E encryption enabled');
+        } catch (err) {
+            console.error('[🔐] Encryption init failed:', err);
+            encryptionEnabled = false;
+        }
+    }
 
     // Connect to relay server
     socket = io({
@@ -231,11 +251,29 @@ function addToHistory(content, contentType, from) {
     displayReceivedContent();
 }
 
-// Helper to send clipboard data
-function sendClipboardData(content, contentType) {
+// Helper to send clipboard data (with encryption)
+async function sendClipboardData(content, contentType) {
+    let encryptedContent;
+    
+    if (encryptionEnabled && clipboardCrypto.isInitialized()) {
+        try {
+            // Encrypt content
+            const dataToEncrypt = contentType === 'text' ? content : content;
+            encryptedContent = await clipboardCrypto.encrypt(dataToEncrypt);
+        } catch (err) {
+            console.error('[🔐] Encryption failed:', err);
+            showNotification('⚠️ Encryption failed', 'error');
+            return;
+        }
+    } else {
+        // Fallback to base64 only (not secure)
+        encryptedContent = contentType === 'text' ? btoa(unescape(encodeURIComponent(content))) : content;
+    }
+    
     socket.emit('clipboard_data', {
-        encrypted_content: contentType === 'text' ? btoa(content) : content,
+        encrypted_content: encryptedContent,
         content_type: contentType,
+        encrypted: encryptionEnabled && clipboardCrypto.isInitialized(),
         timestamp: Date.now()
     });
 }
@@ -270,18 +308,36 @@ function sendToDesktop() {
     }
 }
 
-function receiveFromDesktop(data) {
+async function receiveFromDesktop(data) {
     const contentType = data.content_type || 'text';
+    const isEncrypted = data.encrypted === true;
+    let content;
     
-    // Handle different content types
-    const content = contentType === 'image' 
-        ? data.encrypted_content  // Already a data URL
-        : atob(data.encrypted_content);  // Base64 decode text
-    
-    addToHistory(content, contentType, data.from_name);
-    
-    const typeEmoji = contentType === 'image' ? '🖼️' : '📝';
-    showNotification(`${typeEmoji} Received from ${data.from_name}`);
+    try {
+        if (isEncrypted && encryptionEnabled && clipboardCrypto.isInitialized()) {
+            // Decrypt content
+            content = await clipboardCrypto.decrypt(data.encrypted_content);
+        } else if (contentType === 'image') {
+            // Image data URL - use as-is
+            content = data.encrypted_content;
+        } else {
+            // Legacy base64 decode for text
+            try {
+                content = decodeURIComponent(escape(atob(data.encrypted_content)));
+            } catch {
+                content = atob(data.encrypted_content);
+            }
+        }
+        
+        addToHistory(content, contentType, data.from_name);
+        
+        const typeEmoji = contentType === 'image' ? '🖼️' : '📝';
+        const lockEmoji = isEncrypted ? '🔐' : '';
+        showNotification(`${typeEmoji}${lockEmoji} Received from ${data.from_name}`);
+    } catch (err) {
+        console.error('[🔐] Failed to process received data:', err);
+        showNotification('⚠️ Decryption failed - wrong password?', 'error');
+    }
 }
 
 function displayReceivedContent() {
@@ -434,10 +490,11 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function saveCredentials(roomId, deviceName) {
+function saveCredentials(roomId, deviceName, password = '') {
     localStorage.setItem('clipboard_sync_credentials', JSON.stringify({
         roomId,
-        deviceName
+        deviceName,
+        password
     }));
 }
 

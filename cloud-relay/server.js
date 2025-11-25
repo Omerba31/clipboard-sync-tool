@@ -20,6 +20,10 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const app = express();
+
+// Trust proxy (required for Railway, Heroku, etc.)
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 
 // Constants for free tier protection

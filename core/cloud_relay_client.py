@@ -9,6 +9,8 @@ from typing import Optional, Callable
 from loguru import logger
 import socketio
 
+from core.cloud_relay_crypto import CloudRelayCrypto
+
 
 class CloudRelayClient:
     """Client for connecting to cloud relay server"""
@@ -30,11 +32,14 @@ class CloudRelayClient:
         )
         self.server_url: Optional[str] = None
         self.room_id: Optional[str] = None
+        self.room_password: str = ''
         self.device_id: Optional[str] = None
         self.device_name: str = 'Desktop'
         self.connected = False
         self.on_clipboard_received = on_clipboard_received
         self.on_devices_updated = on_devices_updated
+        self.crypto = CloudRelayCrypto()
+        self.encryption_enabled = True
         
         # Setup event handlers
         self.setup_handlers()
@@ -99,11 +104,20 @@ class CloudRelayClient:
                 content = data.get('encrypted_content', data.get('data', ''))
                 data_type = data.get('content_type', data.get('type', 'text'))
                 from_device = data.get('from_device', data.get('from_name', 'unknown'))
+                is_encrypted = data.get('encrypted', False)
                 
-                logger.info(f"Received clipboard from {from_device}: {data_type} ({len(str(content))} chars)")
+                logger.info(f"Received clipboard from {from_device}: {data_type} (encrypted={is_encrypted})")
                 
-                # Decode base64 if it's text
-                if data_type == 'text':
+                # Decrypt if encrypted and we have crypto initialized
+                if is_encrypted and self.crypto.is_initialized():
+                    try:
+                        content = self.crypto.decrypt(content)
+                        logger.debug("Successfully decrypted content")
+                    except Exception as e:
+                        logger.error(f"Decryption failed: {e}")
+                        return
+                elif data_type == 'text' and not is_encrypted:
+                    # Legacy base64 decode for unencrypted text
                     try:
                         content = base64.b64decode(content).decode('utf-8')
                     except Exception as e:
@@ -121,7 +135,7 @@ class CloudRelayClient:
             """Handle error from server"""
             logger.error(f"Server error: {data.get('message', 'Unknown error')}")
     
-    async def connect_to_server(self, server_url: str, room_id: str, device_id: str, device_name: str = 'Desktop') -> bool:
+    async def connect_to_server(self, server_url: str, room_id: str, device_id: str, device_name: str = 'Desktop', room_password: str = '') -> bool:
         """
         Connect to cloud relay server
         
@@ -130,6 +144,7 @@ class CloudRelayClient:
             room_id: Room ID to join for syncing
             device_id: Unique device identifier
             device_name: Name of this device (default: 'Desktop')
+            room_password: Optional password for E2E encryption
             
         Returns:
             True if connected successfully
@@ -146,6 +161,16 @@ class CloudRelayClient:
             self.room_id = room_id
             self.device_id = device_id
             self.device_name = device_name
+            self.room_password = room_password
+            
+            # Initialize encryption
+            if self.encryption_enabled:
+                try:
+                    self.crypto.init(room_id, room_password)
+                    logger.info("E2E encryption initialized")
+                except Exception as e:
+                    logger.warning(f"Encryption init failed, continuing without: {e}")
+                    self.encryption_enabled = False
             
             # Ensure URL has protocol
             if not server_url.startswith(('http://', 'https://')):
@@ -202,11 +227,21 @@ class CloudRelayClient:
             return False
         
         try:
+            is_encrypted = False
+            
             # Encode content based on type
             if data_type == 'text':
                 if isinstance(content, bytes):
                     content = content.decode('utf-8')
-                encoded_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+                
+                # Encrypt if enabled
+                if self.encryption_enabled and self.crypto.is_initialized():
+                    encoded_content = self.crypto.encrypt(content)
+                    is_encrypted = True
+                    logger.debug("Content encrypted")
+                else:
+                    encoded_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+                    
             elif data_type == 'image':
                 # Image is already bytes, encode to base64
                 if isinstance(content, bytes):
@@ -217,7 +252,14 @@ class CloudRelayClient:
                     buffered = io.BytesIO()
                     img.save(buffered, format="PNG")
                     img_bytes = buffered.getvalue()
-                    encoded_content = f"data:image/png;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
+                    
+                    # For images, encrypt the base64 data
+                    img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+                    if self.encryption_enabled and self.crypto.is_initialized():
+                        encoded_content = self.crypto.encrypt(f"data:image/png;base64,{img_b64}")
+                        is_encrypted = True
+                    else:
+                        encoded_content = f"data:image/png;base64,{img_b64}"
                 else:
                     encoded_content = content
             else:
@@ -228,10 +270,11 @@ class CloudRelayClient:
             await self.sio.emit('clipboard_data', {
                 'encrypted_content': encoded_content,
                 'content_type': data_type,
+                'encrypted': is_encrypted,
                 'timestamp': int(datetime.now().timestamp() * 1000)
             })
             
-            logger.info(f"Sent clipboard to cloud relay: {data_type} ({len(str(encoded_content))} chars)")
+            logger.info(f"Sent clipboard to cloud relay: {data_type} (encrypted={is_encrypted})")
             return True
             
         except Exception as e:
