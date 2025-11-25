@@ -61,7 +61,7 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 
 Write-Host ""
 Write-Host "Installing Python dependencies..." -ForegroundColor Yellow
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 if ($hasNode) {
     Write-Host ""
