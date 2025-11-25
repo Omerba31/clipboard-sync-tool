@@ -131,12 +131,104 @@ if [ "$NODE_INSTALLED" = true ] && [ "$GIT_INSTALLED" = true ]; then
     echo ""
     echo "Would you like to deploy the cloud relay to Railway.app now?"
     echo "(This enables mobile device sync over the internet)"
-    echo "Railway offers $5 free credit/month (no credit card needed)"
-    read -p "Deploy [y/N]: " deploy_response
+    echo "Railway offers \$5 free credit/month (no credit card needed)"
+    echo ""
+    echo "Deployment options:"
+    echo "  [1] CLI Deploy (Recommended - automatic, uses Railway CLI)"
+    echo "  [2] Web Deploy (Manual - uses Railway web dashboard)"
+    echo "  [3] Skip (Deploy later)"
+    echo ""
+    read -p "Choose option (1/2/3): " deploy_response
     
-    if [ "$deploy_response" = "y" ] || [ "$deploy_response" = "Y" ]; then
+    if [ "$deploy_response" = "1" ]; then
+        # CLI Deployment
         echo ""
-        echo "Railway Deployment Steps:"
+        echo "Starting CLI deployment..."
+        
+        # Check if Railway CLI is installed
+        if ! command -v railway &> /dev/null; then
+            echo "Installing Railway CLI via npm..."
+            npm install -g @railway/cli
+        fi
+        
+        if command -v railway &> /dev/null; then
+            echo "✅ Railway CLI found"
+            
+            # Check login status
+            echo ""
+            echo "Checking Railway login..."
+            if ! railway whoami &> /dev/null; then
+                echo "Opening browser for Railway authentication..."
+                railway login
+            fi
+            
+            if railway whoami &> /dev/null; then
+                echo "✅ Logged in to Railway"
+                
+                # Navigate to cloud-relay directory
+                cd cloud-relay
+                
+                echo ""
+                echo "Deploying cloud-relay to Railway..."
+                echo "(This may take 1-2 minutes)"
+                
+                # Initialize project if not already linked
+                if ! railway status &> /dev/null; then
+                    echo ""
+                    echo "Creating new Railway project..."
+                    railway init
+                fi
+                
+                # Deploy
+                if railway up; then
+                    echo ""
+                    echo "✅ Deployment successful!"
+                    
+                    # Get the domain
+                    echo ""
+                    echo "Getting deployment URL..."
+                    domain=$(railway domain 2>&1)
+                    
+                    if [[ $domain =~ https:// ]]; then
+                        DEPLOYED_URL=$(echo "$domain" | tr -d '[:space:]')
+                        echo ""
+                        echo "Your cloud relay URL:"
+                        echo "  $DEPLOYED_URL"
+                        
+                        # Save to config
+                        cd ..
+                        cat > cloud-relay-config.json <<EOF
+{
+  "cloudRelayUrl": "$DEPLOYED_URL",
+  "deployedAt": "$(date '+%Y-%m-%d %H:%M:%S')",
+  "platform": "railway",
+  "deployMethod": "cli"
+}
+EOF
+                        echo ""
+                        echo "✅ URL saved to cloud-relay-config.json"
+                    else
+                        cd ..
+                        echo ""
+                        echo "⚠️  Domain not generated automatically."
+                        echo "   Generate one with: cd cloud-relay && railway domain"
+                    fi
+                else
+                    cd ..
+                    echo ""
+                    echo "❌ Deployment failed. Try again with: ./scripts/deploy.sh"
+                fi
+            fi
+        else
+            echo "⚠️  Railway CLI installation failed."
+            echo "   Try: ./scripts/deploy.sh"
+            echo "   Or use web deploy: https://railway.app/new"
+        fi
+        
+    elif [ "$deploy_response" = "2" ]; then
+        # Web Deployment
+        echo ""
+        echo "Railway Web Deployment Steps:"
         echo ""
         echo "1. Push your code to GitHub (if not already):"
         echo "   git add ."
@@ -181,7 +273,8 @@ if [ "$NODE_INSTALLED" = true ] && [ "$GIT_INSTALLED" = true ]; then
 {
   "cloudRelayUrl": "$railway_url",
   "deployedAt": "$(date '+%Y-%m-%d %H:%M:%S')",
-  "platform": "railway"
+  "platform": "railway",
+  "deployMethod": "web"
 }
 EOF
             echo "✅ URL saved to cloud-relay-config.json"
@@ -189,7 +282,7 @@ EOF
         fi
     else
         echo "Skipping cloud relay deployment"
-        echo "You can deploy later - see: cloud-relay/README.md"
+        echo "You can deploy later with: ./scripts/deploy.sh"
     fi
 elif [ "$GIT_INSTALLED" = false ]; then
     echo ""
@@ -208,7 +301,11 @@ if [ -n "$DEPLOYED_URL" ]; then
     echo "  2. Open on mobile: $DEPLOYED_URL"
     echo "  3. Enter same Room ID on both devices"
 else
-    echo "  2. Deploy cloud relay: See cloud-relay/README.md"
-    echo "     Quick: https://railway.app/new"
+    echo "  2. Deploy cloud relay: ./scripts/deploy.sh"
+    echo "     Or via web: https://railway.app/new"
 fi
+echo ""
+echo "Other commands:"
+echo "  Run tests:    $PYTHON_CMD -m pytest tests/ -v"
+echo "  Deploy:       ./scripts/deploy.sh"
 echo ""

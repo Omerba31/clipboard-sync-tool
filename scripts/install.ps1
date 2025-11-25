@@ -79,14 +79,128 @@ if ($hasNode -and $hasGit) {
     Write-Host "Deploy Cloud Relay to Railway?" -ForegroundColor Cyan
     Write-Host "================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Would you like to deploy the cloud relay to Railway.app now? (y/n)" -ForegroundColor Yellow
+    Write-Host "Would you like to deploy the cloud relay to Railway.app now?" -ForegroundColor Yellow
     Write-Host "(This enables mobile device sync over the internet)" -ForegroundColor Gray
-    Write-Host "Railway offers $5 free credit/month (no credit card needed)" -ForegroundColor Gray
-    $deployResponse = Read-Host "Deploy"
+    Write-Host "Railway offers `$5 free credit/month (no credit card needed)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Deployment options:" -ForegroundColor Cyan
+    Write-Host "  [1] CLI Deploy (Recommended - automatic, uses Railway CLI)" -ForegroundColor White
+    Write-Host "  [2] Web Deploy (Manual - uses Railway web dashboard)" -ForegroundColor White
+    Write-Host "  [3] Skip (Deploy later)" -ForegroundColor White
+    Write-Host ""
+    $deployResponse = Read-Host "Choose option (1/2/3)"
     
-    if ($deployResponse -eq 'y' -or $deployResponse -eq 'Y') {
+    if ($deployResponse -eq '1') {
+        # CLI Deployment
         Write-Host ""
-        Write-Host "Railway Deployment Steps:" -ForegroundColor Cyan
+        Write-Host "Starting CLI deployment..." -ForegroundColor Yellow
+        
+        # Check if Railway CLI is installed
+        $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
+        
+        if (-not $railwayCli) {
+            Write-Host "Installing Railway CLI via npm..." -ForegroundColor Yellow
+            npm install -g @railway/cli
+            
+            # Refresh PATH to find railway
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            $npmGlobalPath = (npm root -g) -replace "node_modules$", "node_modules\.bin"
+            if ($npmGlobalPath -and (Test-Path $npmGlobalPath)) {
+                $env:Path = "$npmGlobalPath;$env:Path"
+            }
+            
+            $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
+            
+            if (-not $railwayCli) {
+                Write-Host "⚠️  Railway CLI installed but not found in PATH" -ForegroundColor Yellow
+                Write-Host "   Please restart PowerShell and run: .\scripts\deploy.ps1" -ForegroundColor Gray
+                Write-Host ""
+                Write-Host "   Or use web deploy: https://railway.app/new" -ForegroundColor Gray
+            }
+        }
+        
+        if ($railwayCli) {
+            Write-Host "✅ Railway CLI found" -ForegroundColor Green
+            
+            # Check login status
+            Write-Host ""
+            Write-Host "Checking Railway login..." -ForegroundColor Yellow
+            $loginCheck = railway whoami 2>&1
+            
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Opening browser for Railway authentication..." -ForegroundColor Yellow
+                railway login
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "❌ Login failed. Try again later with: .\scripts\deploy.ps1" -ForegroundColor Red
+                }
+            }
+            
+            if ($LASTEXITCODE -eq 0 -or (railway whoami 2>&1; $LASTEXITCODE -eq 0)) {
+                Write-Host "✅ Logged in to Railway" -ForegroundColor Green
+                
+                # Navigate to cloud-relay directory
+                Push-Location cloud-relay
+                
+                Write-Host ""
+                Write-Host "Deploying cloud-relay to Railway..." -ForegroundColor Yellow
+                Write-Host "(This may take 1-2 minutes)" -ForegroundColor Gray
+                
+                # Initialize project if not already linked
+                $projectCheck = railway status 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host ""
+                    Write-Host "Creating new Railway project..." -ForegroundColor Yellow
+                    railway init
+                }
+                
+                # Deploy
+                railway up
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host ""
+                    Write-Host "✅ Deployment successful!" -ForegroundColor Green
+                    
+                    # Get the domain
+                    Write-Host ""
+                    Write-Host "Getting deployment URL..." -ForegroundColor Yellow
+                    $domain = railway domain 2>&1
+                    
+                    if ($domain -match "https://") {
+                        $deployedUrl = $domain.Trim()
+                        Write-Host ""
+                        Write-Host "Your cloud relay URL:" -ForegroundColor Cyan
+                        Write-Host "  $deployedUrl" -ForegroundColor White
+                        
+                        # Save to config
+                        Pop-Location
+                        $config = @{
+                            cloudRelayUrl = $deployedUrl
+                            deployedAt = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+                            platform = "railway"
+                            deployMethod = "cli"
+                        }
+                        $config | ConvertTo-Json | Out-File "cloud-relay-config.json" -Encoding UTF8
+                        Write-Host ""
+                        Write-Host "✅ URL saved to cloud-relay-config.json" -ForegroundColor Green
+                    } else {
+                        Pop-Location
+                        Write-Host ""
+                        Write-Host "⚠️  Domain not generated automatically." -ForegroundColor Yellow
+                        Write-Host "   Generate one with:" -ForegroundColor Gray
+                        Write-Host "   cd cloud-relay; railway domain" -ForegroundColor White
+                    }
+                } else {
+                    Pop-Location
+                    Write-Host ""
+                    Write-Host "❌ Deployment failed. Try again with: .\scripts\deploy.ps1" -ForegroundColor Red
+                }
+            }
+        }
+        
+    } elseif ($deployResponse -eq '2') {
+        # Web Deployment
+        Write-Host ""
+        Write-Host "Railway Web Deployment Steps:" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "1. Push your code to GitHub (if not already):" -ForegroundColor Yellow
         Write-Host "   git add ." -ForegroundColor White
@@ -126,6 +240,7 @@ if ($hasNode -and $hasGit) {
                 cloudRelayUrl = $railwayUrl
                 deployedAt = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
                 platform = "railway"
+                deployMethod = "web"
             }
             $config | ConvertTo-Json | Out-File "cloud-relay-config.json" -Encoding UTF8
             Write-Host "✅ URL saved to cloud-relay-config.json" -ForegroundColor Green
@@ -133,7 +248,7 @@ if ($hasNode -and $hasGit) {
         }
     } else {
         Write-Host "Skipping cloud relay deployment" -ForegroundColor Gray
-        Write-Host "You can deploy later - see: cloud-relay/README.md" -ForegroundColor Gray
+        Write-Host "You can deploy later with: .\scripts\deploy.ps1" -ForegroundColor Gray
     }
 } elseif (-not $hasGit) {
     Write-Host ""
@@ -152,7 +267,11 @@ if ($deployedUrl) {
     Write-Host "  2. Open on mobile: $deployedUrl" -ForegroundColor White
     Write-Host "  3. Enter same Room ID on both devices" -ForegroundColor White
 } else {
-    Write-Host "  2. Deploy cloud relay: See cloud-relay/README.md" -ForegroundColor White
-    Write-Host "     Quick: https://railway.app/new" -ForegroundColor Gray
+    Write-Host "  2. Deploy cloud relay: .\scripts\deploy.ps1" -ForegroundColor White
+    Write-Host "     Or via web: https://railway.app/new" -ForegroundColor Gray
 }
+Write-Host ""
+Write-Host "Other commands:" -ForegroundColor Yellow
+Write-Host "  Run tests:    python -m pytest tests/ -v" -ForegroundColor White
+Write-Host "  Deploy:       .\scripts\deploy.ps1" -ForegroundColor White
 Write-Host ""
