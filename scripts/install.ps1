@@ -135,7 +135,9 @@ if ($hasNode -and $hasGit) {
                 }
             }
             
-            if ($LASTEXITCODE -eq 0 -or (railway whoami 2>&1; $LASTEXITCODE -eq 0)) {
+            # Re-check login status
+            $null = railway whoami 2>&1
+            if ($LASTEXITCODE -eq 0) {
                 Write-Host "✅ Logged in to Railway" -ForegroundColor Green
                 
                 # Navigate to cloud-relay directory
