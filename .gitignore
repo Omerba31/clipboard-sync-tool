@@ -43,6 +43,7 @@ storage/*.key
 *.db
 *.sqlite
 *.sqlite3
+cloud-relay-config.json
 
 # Testing
 .pytest_cache/

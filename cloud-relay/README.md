@@ -10,10 +10,10 @@ Node.js relay server for clipboard sync between desktop and mobile devices.
 
 ```bash
 # Windows
-.\deploy.ps1
+.\scripts\deploy.ps1
 
 # Mac/Linux
-chmod +x deploy.sh && ./deploy.sh
+chmod +x scripts/deploy.sh && ./scripts/deploy.sh
 ```
 
 ### Option 2: Web Dashboard

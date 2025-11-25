@@ -20,10 +20,10 @@ git clone https://github.com/Omerba31/clipboard-sync-tool.git
 cd clipboard-sync-tool
 
 # Windows
-.\install.ps1
+.\scripts\install.ps1
 
 # Mac/Linux
-./install.sh
+chmod +x scripts/install.sh && ./scripts/install.sh
 ```
 
 ### 2. Run
@@ -96,10 +96,10 @@ Free deployment to Railway.app ($5 credit/month):
 
 ```bash
 # Windows
-.\deploy.ps1
+.\scripts\deploy.ps1
 
 # Mac/Linux
-chmod +x deploy.sh && ./deploy.sh
+chmod +x scripts/deploy.sh && ./scripts/deploy.sh
 ```
 
 ### Option 2: Web Dashboard
@@ -130,8 +130,20 @@ See [cloud-relay/README.md](cloud-relay/README.md) for details.
 clipboard-sync-tool/
 ├── main.py              # Entry point
 ├── core/                # Sync engine, encryption, networking
+│   ├── cloud_relay_client.py
+│   ├── cloud_relay_crypto.py
+│   ├── encryption.py
+│   ├── monitor.py
+│   ├── network.py
+│   └── sync_engine.py
 ├── gui/                 # Desktop UI (PyQt6)
+│   ├── main_window.py
+│   ├── pairing_server.py
+│   ├── styles.py
+│   └── widgets.py
 ├── cloud-relay/         # Node.js relay server + mobile PWA
+├── scripts/             # Installation and deployment scripts
+├── docs/                # Documentation
 └── tests/               # Unit and integration tests
 ```
 
