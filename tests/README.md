@@ -14,6 +14,7 @@ This directory contains tests for the Clipboard Sync Tool.
   - `test_pairing_server.py` - Local P2P pairing server tests
   - `test_simple_server.py` - HTTP server and threading tests
   - `test_http_response.py` - HTTP connectivity and JSON handling tests
+  - `test_cloud_relay_live.py` - Live cloud relay tests (connects to Railway)
 
 ## Running Tests
 
@@ -74,6 +75,19 @@ python -m pytest tests/ -v --cov=core --cov=gui
 | `test_pairing_server.py` | Tests pairing server start/stop, URL generation |
 | `test_simple_server.py` | Tests HTTP server, threading, client requests |
 | `test_http_response.py` | Tests URL parsing, JSON handling, network helpers |
+| `test_cloud_relay_live.py` | **LIVE** - Tests Railway server health, Socket.IO, message relay |
+
+### Live Tests
+
+The `test_cloud_relay_live.py` tests connect to the actual Railway server. These require internet and a running deployment.
+
+```bash
+# Run only live tests
+python -m pytest tests/integration/test_cloud_relay_live.py -v
+
+# Run all tests EXCEPT live tests (offline)
+python -m pytest tests/ -v --ignore=tests/integration/test_cloud_relay_live.py
+```
 
 ## Writing New Tests
 

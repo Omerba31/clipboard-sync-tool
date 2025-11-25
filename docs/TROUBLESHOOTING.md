@@ -25,7 +25,7 @@
 # Reinstall dependencies
 pip install -r requirements.txt
 
-# Check Python version (need 3.8+)
+# Check Python version (need 3.10+)
 python --version
 ```
 
@@ -43,4 +43,4 @@ Wait a minute or deploy your own relay.
 - Use unique Room IDs to avoid conflicts with other users
 - Both Cloud Relay and Local P2P use end-to-end encryption
 
-See [main README](../README.md#security) for encryption details.
+See [ENCRYPTION.md](ENCRYPTION.md) for detailed encryption documentation.

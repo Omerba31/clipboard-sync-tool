@@ -88,6 +88,8 @@ Computer A ←→ Computer B
 - Forward secrecy per message
 - Data never leaves your network
 
+📖 See [docs/ENCRYPTION.md](docs/ENCRYPTION.md) for detailed encryption documentation.
+
 ---
 
 ## Deploy Your Own Cloud Relay

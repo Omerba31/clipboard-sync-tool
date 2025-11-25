@@ -24,4 +24,4 @@ Devices on the same WiFi network appear automatically in the Devices tab.
 
 ⚠️ **Password must match on all devices.** If you set a password on desktop, use the exact same password on mobile/other devices.
 
-Both modes use end-to-end encryption. See [main README](../README.md#security) for details.
+Both modes use end-to-end encryption. See [ENCRYPTION.md](ENCRYPTION.md) for details.
