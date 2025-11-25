@@ -6,32 +6,53 @@ Write-Host "Cloud Relay - Railway Deployment" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 
+# Check if Node.js is installed (required for Railway CLI)
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+    Write-Host "Node.js not found (required for Railway CLI)." -ForegroundColor Yellow
+    
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host ""
+        Write-Host "Install Node.js now? (y/n)" -ForegroundColor Yellow
+        $installNode = Read-Host "Install"
+        if ($installNode -eq 'y' -or $installNode -eq 'Y') {
+            Write-Host "Installing Node.js via winget..." -ForegroundColor Yellow
+            winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
+            # Refresh PATH
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+                Write-Host ""
+                Write-Host "Node.js installed! Please restart PowerShell and run .\deploy.ps1 again" -ForegroundColor Green
+                exit 0
+            }
+        } else {
+            Write-Host ""
+            Write-Host "Use Web Dashboard instead: https://railway.app/new" -ForegroundColor Cyan
+            Write-Host "  1. Click 'Deploy from GitHub repo'" -ForegroundColor White
+            Write-Host "  2. Select clipboard-sync-tool repository" -ForegroundColor White
+            Write-Host "  3. Set Root Directory to 'cloud-relay'" -ForegroundColor White
+            Write-Host "  4. Generate Domain in Settings" -ForegroundColor White
+            exit 0
+        }
+    } else {
+        Write-Host ""
+        Write-Host "Install Node.js from: https://nodejs.org" -ForegroundColor Cyan
+        Write-Host "Or use Web Dashboard: https://railway.app/new" -ForegroundColor Cyan
+        exit 1
+    }
+}
+
 # Check if Railway CLI is installed
 $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
 
 if (-not $railwayCli) {
-    Write-Host "Railway CLI not found. Installing..." -ForegroundColor Yellow
-    
-    # Try npm install
-    if (Get-Command npm -ErrorAction SilentlyContinue) {
-        npm install -g @railway/cli
-        $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
-    }
-    
-    # Try scoop
-    if (-not $railwayCli -and (Get-Command scoop -ErrorAction SilentlyContinue)) {
-        scoop install railway
-        $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
-    }
+    Write-Host "Installing Railway CLI via npm..." -ForegroundColor Yellow
+    npm install -g @railway/cli
+    $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
     
     if (-not $railwayCli) {
         Write-Host ""
-        Write-Host "Could not install Railway CLI automatically." -ForegroundColor Red
-        Write-Host "Install manually:" -ForegroundColor Yellow
-        Write-Host "  npm install -g @railway/cli" -ForegroundColor White
-        Write-Host "  OR" -ForegroundColor Gray
-        Write-Host "  scoop install railway" -ForegroundColor White
-        Write-Host "  OR download from: https://docs.railway.app/guides/cli" -ForegroundColor White
+        Write-Host "Railway CLI installation failed." -ForegroundColor Red
+        Write-Host "Use Web Dashboard instead: https://railway.app/new" -ForegroundColor Cyan
         exit 1
     }
 }

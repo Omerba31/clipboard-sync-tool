@@ -7,30 +7,64 @@ echo "Cloud Relay - Railway Deployment"
 echo "================================"
 echo ""
 
+# Check if Node.js is installed (required for Railway CLI)
+if ! command -v node &> /dev/null; then
+    echo "Node.js not found (required for Railway CLI)."
+    echo ""
+    read -p "Install Node.js now? [y/N]: " install_node
+    
+    if [ "$install_node" = "y" ] || [ "$install_node" = "Y" ]; then
+        echo "Installing Node.js..."
+        
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS - use brew
+            if command -v brew &> /dev/null; then
+                brew install node
+            else
+                echo "Installing Homebrew first..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                brew install node
+            fi
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Linux - use apt or dnf
+            if command -v apt &> /dev/null; then
+                curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+            elif command -v dnf &> /dev/null; then
+                sudo dnf install -y nodejs
+            elif command -v pacman &> /dev/null; then
+                sudo pacman -S nodejs npm
+            else
+                echo "Please install Node.js manually from https://nodejs.org"
+                exit 1
+            fi
+        fi
+        
+        if ! command -v node &> /dev/null; then
+            echo ""
+            echo "Node.js installed! Please restart terminal and run ./deploy.sh again"
+            exit 0
+        fi
+    else
+        echo ""
+        echo "Use Web Dashboard instead: https://railway.app/new"
+        echo "  1. Click 'Deploy from GitHub repo'"
+        echo "  2. Select clipboard-sync-tool repository"
+        echo "  3. Set Root Directory to 'cloud-relay'"
+        echo "  4. Generate Domain in Settings"
+        exit 0
+    fi
+fi
+
 # Check if Railway CLI is installed
 if ! command -v railway &> /dev/null; then
-    echo "Railway CLI not found. Installing..."
-    
-    # Try npm
-    if command -v npm &> /dev/null; then
-        npm install -g @railway/cli
-    # Try brew on macOS
-    elif command -v brew &> /dev/null; then
-        brew install railway
-    # Try curl install
-    else
-        curl -fsSL https://railway.app/install.sh | sh
-    fi
+    echo "Installing Railway CLI via npm..."
+    npm install -g @railway/cli
     
     if ! command -v railway &> /dev/null; then
         echo ""
-        echo "❌ Could not install Railway CLI automatically."
-        echo "Install manually:"
-        echo "  npm install -g @railway/cli"
-        echo "  OR"
-        echo "  brew install railway"
-        echo "  OR"
-        echo "  curl -fsSL https://railway.app/install.sh | sh"
+        echo "❌ Railway CLI installation failed."
+        echo "Use Web Dashboard instead: https://railway.app/new"
         exit 1
     fi
 fi

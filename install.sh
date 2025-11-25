@@ -29,8 +29,46 @@ if command -v node &> /dev/null; then
     echo "✅ Node.js $NODE_VERSION found"
     NODE_INSTALLED=true
 else
-    echo "❌ Node.js not found. Please install Node.js 18+ from https://nodejs.org/"
-    NODE_INSTALLED=false
+    echo "⚠️  Node.js not found (required for cloud relay deployment)"
+    
+    # Offer to install
+    read -p "Install Node.js now? [y/N]: " install_node
+    if [ "$install_node" = "y" ] || [ "$install_node" = "Y" ]; then
+        echo "Installing Node.js..."
+        
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS - use brew
+            if command -v brew &> /dev/null; then
+                brew install node
+            else
+                echo "Installing Homebrew first..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                brew install node
+            fi
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Linux - use apt or dnf
+            if command -v apt &> /dev/null; then
+                curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+            elif command -v dnf &> /dev/null; then
+                sudo dnf install -y nodejs
+            elif command -v pacman &> /dev/null; then
+                sudo pacman -S nodejs npm
+            else
+                echo "Please install Node.js manually from https://nodejs.org"
+            fi
+        fi
+        
+        if command -v node &> /dev/null; then
+            echo "✅ Node.js installed successfully"
+            NODE_INSTALLED=true
+        else
+            echo "⚠️  Node.js installation may require terminal restart"
+            NODE_INSTALLED=false
+        fi
+    else
+        NODE_INSTALLED=false
+    fi
 fi
 
 # Check Git (needed for Railway deployment)

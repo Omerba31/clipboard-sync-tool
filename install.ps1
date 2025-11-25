@@ -19,8 +19,34 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
     Write-Host "✅ Node.js found" -ForegroundColor Green
     $hasNode = $true
 } else {
-    Write-Host "⚠️ Node.js not found (cloud relay will not be available)" -ForegroundColor Yellow
-    $hasNode = $false
+    Write-Host "⚠️ Node.js not found" -ForegroundColor Yellow
+    Write-Host "   (Required for cloud relay deployment)" -ForegroundColor Gray
+    
+    # Offer to install via winget
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host ""
+        Write-Host "Install Node.js now? (y/n)" -ForegroundColor Yellow
+        $installNode = Read-Host "Install"
+        if ($installNode -eq 'y' -or $installNode -eq 'Y') {
+            Write-Host "Installing Node.js via winget..." -ForegroundColor Yellow
+            winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
+            # Refresh PATH
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            if (Get-Command node -ErrorAction SilentlyContinue) {
+                Write-Host "✅ Node.js installed successfully" -ForegroundColor Green
+                $hasNode = $true
+            } else {
+                Write-Host "⚠️ Node.js installed but requires terminal restart" -ForegroundColor Yellow
+                Write-Host "   Please restart PowerShell and run install.ps1 again" -ForegroundColor Gray
+                $hasNode = $false
+            }
+        } else {
+            $hasNode = $false
+        }
+    } else {
+        Write-Host "   Install from: https://nodejs.org" -ForegroundColor Gray
+        $hasNode = $false
+    }
 }
 
 # Check Git (needed for Railway deployment)
