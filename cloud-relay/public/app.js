@@ -7,6 +7,39 @@ let clipboardHistory = [];
 let selectedImage = null; // Store selected image data
 let encryptionEnabled = true; // E2E encryption on by default
 let roomPassword = ''; // Optional password for extra security
+let soundEnabled = true; // Sound notification enabled by default
+
+// Notification sound using Web Audio API
+let audioContext = null;
+
+function playNotificationSound() {
+    if (!soundEnabled) return;
+    
+    try {
+        // Create audio context on first use (must be after user interaction)
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Create a simple beep sound
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800; // Hz
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (err) {
+        console.log('[🔊] Sound not available:', err.message);
+    }
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -378,6 +411,9 @@ async function receiveFromDesktop(data) {
         const typeEmoji = contentType === 'image' ? '🖼️' : '📝';
         const lockEmoji = isEncrypted ? '🔐' : '';
         showNotification(`${typeEmoji}${lockEmoji} Received from ${data.from_name}`);
+        
+        // Play notification sound
+        playNotificationSound();
     } catch (err) {
         console.error('[🔐] Failed to process received data:', err);
         showNotification('⚠️ Failed to process data', 'error');
@@ -549,6 +585,18 @@ function loadCredentials() {
 
 function clearCredentials() {
     localStorage.removeItem('clipboard_sync_credentials');
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggle');
+    btn.textContent = soundEnabled ? '🔊' : '🔇';
+    btn.title = soundEnabled ? 'Sound on - click to mute' : 'Sound off - click to unmute';
+    
+    // Play a test sound if enabling
+    if (soundEnabled) {
+        playNotificationSound();
+    }
 }
 
 function disconnect() {

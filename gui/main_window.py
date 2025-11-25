@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from PyQt6.QtMultimedia import QSoundEffect
 import qrcode
 import pyperclip
 
@@ -47,6 +48,10 @@ class MainWindow(QMainWindow):
         self.clipboard_history = []
         self.history_widgets = []
         self.is_syncing = True
+        self.sound_enabled = True
+        
+        # Setup sound effect
+        self.setup_sound()
         
         self.setup_ui()
         if CORE_AVAILABLE:
@@ -54,6 +59,34 @@ class MainWindow(QMainWindow):
         else:
             self.setup_simple_mode()
         self.setup_timers()
+    
+    def setup_sound(self):
+        """Setup notification sound"""
+        self.notification_sound = QSoundEffect()
+        
+        # Try to load custom sound, fall back to system beep
+        sound_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'notification.wav')
+        if os.path.exists(sound_path):
+            self.notification_sound.setSource(QUrl.fromLocalFile(sound_path))
+        else:
+            # Create a simple beep sound path (will use system sound as fallback)
+            self._use_system_beep = True
+        
+        self.notification_sound.setVolume(0.5)
+    
+    def play_notification_sound(self):
+        """Play notification sound when clipboard is received"""
+        if not self.sound_enabled:
+            return
+        
+        try:
+            if hasattr(self, '_use_system_beep') and self._use_system_beep:
+                # Use system beep
+                QApplication.beep()
+            else:
+                self.notification_sound.play()
+        except Exception as e:
+            print(f"Could not play sound: {e}")
     
     def setup_ui(self):
         """Setup the main UI"""
@@ -337,6 +370,12 @@ class MainWindow(QMainWindow):
         self.auto_sync_check.setChecked(True)
         layout.addRow("Auto Sync:", self.auto_sync_check)
         
+        # Sound notification
+        self.sound_check = QCheckBox("Play sound when clipboard received")
+        self.sound_check.setChecked(True)
+        self.sound_check.stateChanged.connect(lambda state: setattr(self, 'sound_enabled', state == Qt.CheckState.Checked.value))
+        layout.addRow("Sound:", self.sound_check)
+        
         # Content types
         types_group = QWidget()
         types_layout = QHBoxLayout()
@@ -585,6 +624,9 @@ class MainWindow(QMainWindow):
                     self.history_layout.addStretch()
                 
                 print(f"📥 Cloud relay item added to GUI: {content[:50]}...")
+                
+                # Play notification sound
+                self.play_notification_sound()
         
         self._last_cloud_history_len = current_len
 
