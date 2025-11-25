@@ -15,8 +15,40 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
 
 # Check Node.js
 Write-Host "Checking Node.js..." -ForegroundColor Yellow
-if (Get-Command node -ErrorAction SilentlyContinue) {
-    Write-Host "✅ Node.js found" -ForegroundColor Green
+
+# Function to find Node.js in common locations
+function Find-NodeJS {
+    # First, try Get-Command
+    $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+    if ($nodeCmd) {
+        return $nodeCmd.Source
+    }
+    
+    # Check common installation paths
+    $commonPaths = @(
+        "$env:ProgramFiles\nodejs\node.exe",
+        "${env:ProgramFiles(x86)}\nodejs\node.exe",
+        "$env:LOCALAPPDATA\Programs\nodejs\node.exe",
+        "$env:APPDATA\npm\node.exe"
+    )
+    
+    foreach ($path in $commonPaths) {
+        if (Test-Path $path) {
+            # Add to PATH for this session
+            $nodeDir = Split-Path $path -Parent
+            if ($env:Path -notlike "*$nodeDir*") {
+                $env:Path = "$nodeDir;$env:Path"
+            }
+            return $path
+        }
+    }
+    
+    return $null
+}
+
+$nodePath = Find-NodeJS
+if ($nodePath) {
+    Write-Host "✅ Node.js found: $nodePath" -ForegroundColor Green
     $hasNode = $true
 } else {
     Write-Host "⚠️ Node.js not found" -ForegroundColor Yellow
@@ -32,8 +64,10 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
             winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
             # Refresh PATH
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-            if (Get-Command node -ErrorAction SilentlyContinue) {
-                Write-Host "✅ Node.js installed successfully" -ForegroundColor Green
+            # Re-check with improved detection
+            $nodePath = Find-NodeJS
+            if ($nodePath) {
+                Write-Host "✅ Node.js installed successfully: $nodePath" -ForegroundColor Green
                 $hasNode = $true
             } else {
                 Write-Host "⚠️ Node.js installed but requires terminal restart" -ForegroundColor Yellow
