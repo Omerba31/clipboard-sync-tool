@@ -100,11 +100,13 @@ async function connectToServer() {
     if (encryptionEnabled && typeof clipboardCrypto !== 'undefined') {
         try {
             await clipboardCrypto.init(roomId, roomPassword);
-            console.log('[🔐] E2E encryption enabled');
+            console.log('[🔐] E2E encryption enabled with room:', roomId, 'password:', roomPassword ? '(set)' : '(empty)');
         } catch (err) {
             console.error('[🔐] Encryption init failed:', err);
             encryptionEnabled = false;
         }
+    } else {
+        console.warn('[🔐] Encryption disabled or crypto not available');
     }
 
     // Connect to relay server
@@ -118,6 +120,19 @@ async function connectToServer() {
     socket.on('connect', () => {
         console.log('[✓] Connected to relay server');
         updateStatus('Connected', true);
+        
+        // Update encryption status indicator
+        const encStatus = document.getElementById('encryptionStatus');
+        if (encStatus) {
+            if (encryptionEnabled && clipboardCrypto.isInitialized()) {
+                encStatus.textContent = '🔐 E2E';
+                encStatus.title = 'End-to-end encrypted';
+            } else {
+                encStatus.textContent = '⚠️ No E2E';
+                encStatus.title = 'Not encrypted - set a password';
+                encStatus.style.color = '#ff9800';
+            }
+        }
 
         // Detect device type automatically
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -313,15 +328,30 @@ async function receiveFromDesktop(data) {
     const isEncrypted = data.encrypted === true;
     let content;
     
+    console.log('[📋] Processing received data:', { contentType, isEncrypted, hasEncryptedContent: !!data.encrypted_content });
+    
     try {
-        if (isEncrypted && encryptionEnabled && clipboardCrypto.isInitialized()) {
-            // Decrypt content
-            content = await clipboardCrypto.decrypt(data.encrypted_content);
+        if (isEncrypted) {
+            // Data is encrypted - must decrypt
+            if (!encryptionEnabled || !clipboardCrypto.isInitialized()) {
+                console.error('[🔐] Cannot decrypt: encryption not initialized');
+                showNotification('⚠️ Cannot decrypt - enter password and reconnect', 'error');
+                return;
+            }
+            
+            try {
+                content = await clipboardCrypto.decrypt(data.encrypted_content);
+                console.log('[🔐] Successfully decrypted content');
+            } catch (decryptError) {
+                console.error('[🔐] Decryption failed:', decryptError);
+                showNotification('⚠️ Decryption failed - wrong password?', 'error');
+                return;
+            }
         } else if (contentType === 'image') {
-            // Image data URL - use as-is
+            // Unencrypted image data URL - use as-is
             content = data.encrypted_content;
         } else {
-            // Legacy base64 decode for text
+            // Legacy unencrypted base64 decode for text
             try {
                 content = decodeURIComponent(escape(atob(data.encrypted_content)));
             } catch {
@@ -336,7 +366,7 @@ async function receiveFromDesktop(data) {
         showNotification(`${typeEmoji}${lockEmoji} Received from ${data.from_name}`);
     } catch (err) {
         console.error('[🔐] Failed to process received data:', err);
-        showNotification('⚠️ Decryption failed - wrong password?', 'error');
+        showNotification('⚠️ Failed to process data', 'error');
     }
 }
 

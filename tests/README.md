@@ -18,39 +18,41 @@ This directory contains tests for the Clipboard Sync Tool.
 
 > **Note:** pytest is automatically installed when you run `.\scripts\install.ps1` or `pip install -r requirements.txt`
 
+> **Windows Users:** Always use `python -m pytest` instead of `pytest` directly. Running `pytest` directly may fail with "Access is denied" due to Windows permissions issues.
+
 ### Run All Tests
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
 ### Run Unit Tests Only
 ```bash
-pytest tests/unit/ -v
+python -m pytest tests/unit/ -v
 ```
 
 ### Run Integration Tests Only
 ```bash
-pytest tests/integration/ -v
+python -m pytest tests/integration/ -v
 ```
 
 ### Run Specific Test File
 ```bash
-pytest tests/unit/test_encryption.py -v
+python -m pytest tests/unit/test_encryption.py -v
 ```
 
 ### Run Specific Test Class
 ```bash
-pytest tests/unit/test_encryption.py::TestCloudRelayCrypto -v
+python -m pytest tests/unit/test_encryption.py::TestCloudRelayCrypto -v
 ```
 
 ### Run Specific Test Method
 ```bash
-pytest tests/unit/test_encryption.py::TestCloudRelayCrypto::test_encrypt_decrypt -v
+python -m pytest tests/unit/test_encryption.py::TestCloudRelayCrypto::test_encrypt_decrypt -v
 ```
 
 ### Run with Coverage
 ```bash
-pytest tests/ -v --cov=core --cov=gui
+python -m pytest tests/ -v --cov=core --cov=gui
 ```
 
 ## Test Categories
