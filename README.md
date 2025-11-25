@@ -6,8 +6,10 @@ Sync your clipboard between desktop and mobile devices - copy on one, paste on a
 
 - **Cloud Sync** - Sync between desktop and mobile via cloud relay (works anywhere)
 - **Local P2P** - Encrypted desktop-to-desktop sync on same network
+- **End-to-End Encryption** - AES-256-GCM encryption, server never sees plaintext
 - **Bidirectional** - Send and receive clipboard in both directions
 - **Images** - Support for images up to 5MB
+- **Cross-Platform** - Desktop (Windows/Mac/Linux) + Mobile (any browser)
 
 ---
 
@@ -119,8 +121,38 @@ See [cloud-relay/README.md](cloud-relay/README.md) for details.
 |-------|----------|
 | Mobile won't connect | Check Room ID matches exactly |
 | Desktop says connected but no sync | Click "Test Sync" button |
+| Decryption failed error | Ensure same password on both devices |
 | P2P devices not found | Both must be on same WiFi |
 | App won't start | Run `pip install -r requirements.txt` |
+| pytest Access Denied (Windows) | Use `python -m pytest` instead of `pytest` |
+
+---
+
+## Testing
+
+Run the test suite with pytest:
+
+```bash
+# Windows (use python -m to avoid permission issues)
+python -m pytest tests/ -v
+
+# Mac/Linux
+pytest tests/ -v
+
+# Run specific test file
+python -m pytest tests/unit/test_encryption.py -v
+
+# Run with coverage
+python -m pytest tests/ --cov=core --cov-report=html
+```
+
+### Test Categories
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| **Unit** | `tests/unit/` | Core encryption, sync engine, clipboard |
+| **Integration** | `tests/integration/` | Pairing server, HTTP endpoints |
+| **Crypto Compatibility** | `test_crypto_compatibility.py` | Python ↔ JavaScript encryption |
 
 ---
 
@@ -145,7 +177,25 @@ clipboard-sync-tool/
 ├── scripts/             # Installation and deployment scripts
 ├── docs/                # Documentation
 └── tests/               # Unit and integration tests
+    ├── unit/            # Core component tests
+    └── integration/     # Server and API tests
 ```
+
+---
+
+## Requirements
+
+- **Python 3.10+**
+- **PyQt6** - Desktop GUI
+- **Node.js 18+** - Cloud relay server (for deployment only)
+
+### Python Dependencies
+
+```
+PyQt6, cryptography, pyperclip, pillow, qrcode, socketio, loguru
+```
+
+Install all with: `pip install -r requirements.txt`
 
 ---
 
