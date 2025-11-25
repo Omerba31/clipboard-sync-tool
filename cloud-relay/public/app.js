@@ -214,6 +214,32 @@ function clearImage() {
     document.getElementById('clearImageBtn').style.display = 'none';
 }
 
+// Helper to add item to history
+function addToHistory(content, contentType, from) {
+    clipboardHistory.unshift({
+        content,
+        contentType,
+        timestamp: Date.now(),
+        from
+    });
+    
+    // Keep only last 10 items
+    if (clipboardHistory.length > 10) {
+        clipboardHistory.pop();
+    }
+    
+    displayReceivedContent();
+}
+
+// Helper to send clipboard data
+function sendClipboardData(content, contentType) {
+    socket.emit('clipboard_data', {
+        encrypted_content: contentType === 'text' ? btoa(content) : content,
+        content_type: contentType,
+        timestamp: Date.now()
+    });
+}
+
 function sendToDesktop() {
     const text = document.getElementById('sendText').value.trim();
     
@@ -229,52 +255,16 @@ function sendToDesktop() {
 
     // Send image if selected
     if (selectedImage) {
-        const timestamp = Date.now();
-        socket.emit('clipboard_data', {
-            encrypted_content: selectedImage, // Base64 data URL
-            content_type: 'image',
-            timestamp: timestamp
-        });
-        
-        // Add to local history as "sent" item
-        clipboardHistory.unshift({
-            content: selectedImage,
-            contentType: 'image',
-            timestamp: timestamp,
-            from: 'You (sent)'
-        });
-        
-        if (clipboardHistory.length > 10) {
-            clipboardHistory.pop();
-        }
-        
-        displayReceivedContent();
+        sendClipboardData(selectedImage, 'image');
+        addToHistory(selectedImage, 'image', 'You (sent)');
         showNotification('✅ Image sent to other devices!');
         clearImage();
     }
     
     // Send text if provided
     if (text) {
-        const timestamp = Date.now();
-        socket.emit('clipboard_data', {
-            encrypted_content: btoa(text), // Base64 encode
-            content_type: 'text',
-            timestamp: timestamp
-        });
-        
-        // Add to local history as "sent" item
-        clipboardHistory.unshift({
-            content: text,
-            contentType: 'text',
-            timestamp: timestamp,
-            from: 'You (sent)'
-        });
-        
-        if (clipboardHistory.length > 10) {
-            clipboardHistory.pop();
-        }
-        
-        displayReceivedContent();
+        sendClipboardData(text, 'text');
+        addToHistory(text, 'text', 'You (sent)');
         showNotification('✅ Text sent to other devices!');
         document.getElementById('sendText').value = '';
     }
@@ -282,30 +272,13 @@ function sendToDesktop() {
 
 function receiveFromDesktop(data) {
     const contentType = data.content_type || 'text';
-    let content;
     
     // Handle different content types
-    if (contentType === 'image') {
-        content = data.encrypted_content; // Already a data URL
-    } else {
-        content = atob(data.encrypted_content); // Base64 decode text
-    }
+    const content = contentType === 'image' 
+        ? data.encrypted_content  // Already a data URL
+        : atob(data.encrypted_content);  // Base64 decode text
     
-    // Add to history
-    clipboardHistory.unshift({
-        content,
-        contentType,
-        timestamp: data.timestamp || Date.now(),
-        from: data.from_name
-    });
-
-    // Keep only last 10 items
-    if (clipboardHistory.length > 10) {
-        clipboardHistory.pop();
-    }
-
-    // Update UI
-    displayReceivedContent();
+    addToHistory(content, contentType, data.from_name);
     
     const typeEmoji = contentType === 'image' ? '🖼️' : '📝';
     showNotification(`${typeEmoji} Received from ${data.from_name}`);
@@ -356,14 +329,9 @@ function displayReceivedContent() {
     }).join('');
 }
 
-function copyToClipboard(index) {
-    const item = clipboardHistory[index];
-    if (!item || item.contentType !== 'text') return;
-    
-    const text = item.content;
-    navigator.clipboard.writeText(text).then(() => {
-        showNotification('✅ Copied to clipboard!');
-    }).catch(() => {
+// Helper function for clipboard operations with fallback
+function writeToClipboard(text) {
+    return navigator.clipboard.writeText(text).catch(() => {
         // Fallback for older browsers
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -371,33 +339,30 @@ function copyToClipboard(index) {
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
+        return Promise.resolve();
+    });
+}
+
+function copyToClipboard(index) {
+    const item = clipboardHistory[index];
+    if (!item || item.contentType !== 'text') return;
+    
+    writeToClipboard(item.content).then(() => {
         showNotification('✅ Copied to clipboard!');
     });
 }
 
 function copyAllContent() {
-    // Collect all text content (skip images)
-    const allText = clipboardHistory
-        .filter(item => item.contentType !== 'image')
-        .map(item => item.content)
-        .join('\n\n---\n\n'); // Separate items with line breaks
+    const textItems = clipboardHistory.filter(item => item.contentType !== 'image');
+    const allText = textItems.map(item => item.content).join('\n\n---\n\n');
     
     if (!allText) {
         showNotification('⚠️ No text content to copy', 'error');
         return;
     }
     
-    navigator.clipboard.writeText(allText).then(() => {
-        showNotification(`✅ Copied ${clipboardHistory.filter(i => i.contentType !== 'image').length} items!`);
-    }).catch(() => {
-        // Fallback for older browsers
-        const textarea = document.createElement('textarea');
-        textarea.value = allText;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showNotification(`✅ Copied ${clipboardHistory.filter(i => i.contentType !== 'image').length} items!`);
+    writeToClipboard(allText).then(() => {
+        showNotification(`✅ Copied ${textItems.length} items!`);
     });
 }
 

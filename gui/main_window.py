@@ -1,8 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 # gui/main_window.py
 """
-Complete GUI for Clipboard Sync Tool using PyQt6.
-Fixed version with all features properly implemented.
+Clipboard Sync Tool GUI using PyQt6.
 """
 
 import sys
@@ -22,6 +21,11 @@ from PyQt6.QtGui import *
 import qrcode
 import pyperclip
 
+# Import centralized styles and widgets
+from gui import styles
+from gui.styles import Colors, CONTENT_ICONS, PLATFORM_ICONS
+from gui.widgets import ClipboardItemWidget, DeviceWidget, StatCard
+
 try:
     from core.sync_engine import SyncEngine
     from core.monitor import ContentType
@@ -32,175 +36,9 @@ except ImportError:
     PairingServer = None
     print("Warning: Core modules not available, running in limited mode")
 
-class ClipboardItemWidget(QWidget):
-    """Widget for displaying clipboard history item"""
-    
-    def __init__(self, content: str, content_type: str, timestamp: datetime, 
-                 device: str, is_sent: bool = True):
-        super().__init__()
-        self.content = content
-        self.setup_ui(content_type, timestamp, device, is_sent)
-    
-    def setup_ui(self, content_type: str, timestamp: datetime, device: str, is_sent: bool):
-        layout = QHBoxLayout()
-        layout.setContentsMargins(10, 5, 10, 5)
-        
-        # Icon based on content type
-        icon_label = QLabel()
-        icon_map = {
-            'text': '📝',
-            'image': '🖼️',
-            'code': '💻',
-            'url': '🔗',
-            'json': '📊',
-            'file': '📁'
-        }
-        icon_label.setText(icon_map.get(content_type, '📎'))
-        icon_label.setStyleSheet("font-size: 24px;")
-        icon_label.setFixedWidth(40)
-        layout.addWidget(icon_label)
-        
-        # Content preview
-        content_layout = QVBoxLayout()
-        
-        # Content text (truncated)
-        display_content = str(self.content)[:100] + '...' if len(str(self.content)) > 100 else str(self.content)
-        content_label = QLabel(display_content.replace('\n', ' '))
-        content_label.setWordWrap(True)
-        content_label.setStyleSheet("font-size: 12px;")
-        content_layout.addWidget(content_label)
-        
-        # Metadata
-        meta_text = f"{'Sent to' if is_sent else 'From'} {device} • {timestamp.strftime('%H:%M:%S')}"
-        meta_label = QLabel(meta_text)
-        meta_label.setStyleSheet("color: #888; font-size: 10px;")
-        content_layout.addWidget(meta_label)
-        
-        layout.addLayout(content_layout, 1)
-        
-        # Action buttons
-        copy_btn = QPushButton("Copy")
-        copy_btn.setToolTip("Copy to clipboard")
-        copy_btn.clicked.connect(self.copy_to_clipboard)
-        copy_btn.setFixedSize(60, 30)
-        copy_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
-        layout.addWidget(copy_btn)
-        
-        self.setLayout(layout)
-        
-        # Widget styling
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 5px;
-            }
-            QWidget:hover {
-                background-color: #f9f9f9;
-                border: 1px solid #4CAF50;
-            }
-        """)
-
-    def copy_to_clipboard(self):
-        """Copy content back to clipboard"""
-        try:
-            pyperclip.copy(str(self.content))
-            QMessageBox.information(self, "Copied", "Content copied to clipboard!")
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not copy: {str(e)}")
-
-class DeviceWidget(QWidget):
-    """Widget for displaying connected device"""
-    
-    pair_signal = pyqtSignal(object)
-    
-    def __init__(self, device_info: dict):
-        super().__init__()
-        self.device = device_info
-        self.setup_ui()
-    
-    def setup_ui(self):
-        layout = QHBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
-        
-        # Device icon
-        icon_label = QLabel()
-        platform_icons = {
-            'windows': '💻',
-            'darwin': '🖥️',
-            'linux': '🐧',
-            'android': '📱',
-            'ios': '📱'
-        }
-        icon_label.setText(platform_icons.get('windows', '📟'))
-        icon_label.setStyleSheet("font-size: 32px;")
-        icon_label.setFixedWidth(50)
-        layout.addWidget(icon_label)
-        
-        # Device info
-        info_layout = QVBoxLayout()
-        
-        name_label = QLabel(self.device.get('name', 'Unknown Device'))
-        name_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        info_layout.addWidget(name_label)
-        
-        status = self.device.get('status', 'unknown')
-        ip = self.device.get('ip_address', 'N/A')
-        status_text = f"🟢 {status} • {ip}"
-        status_label = QLabel(status_text)
-        status_label.setStyleSheet("color: #666; font-size: 12px;")
-        info_layout.addWidget(status_label)
-        
-        layout.addLayout(info_layout, 1)
-        
-        # Action button
-        if status != 'paired':
-            pair_btn = QPushButton("Connect")
-            pair_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    padding: 5px 15px;
-                    border-radius: 4px;
-                }
-                QPushButton:hover {
-                    background-color: #45a049;
-                }
-            """)
-            # Store a reference to the button for external connection
-            self.pair_btn = pair_btn
-            layout.addWidget(pair_btn)
-        else:
-            trust_label = QLabel("✔ Connected")
-            trust_label.setStyleSheet("color: green; font-weight: bold;")
-            layout.addWidget(trust_label)
-        
-        self.setLayout(layout)
-        
-        # Widget styling
-        self.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-            }
-        """)
 
 class MainWindow(QMainWindow):
-    """Main application window with full features"""
+    """Main application window"""
     
     def __init__(self):
         super().__init__()
@@ -222,25 +60,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("📄 Clipboard Sync Tool")
         self.setGeometry(100, 100, 1000, 700)
         
-        # Set modern style
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #f0f0f0;
-            }
-            QTabWidget::pane {
-                background: white;
-                border: none;
-            }
-            QTabBar::tab {
-                padding: 10px 20px;
-                margin: 2px;
-                background: #f0f0f0;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom: 3px solid #4CAF50;
-            }
-        """)
+        # Set modern style from centralized styles
+        self.setStyleSheet(styles.MAIN_WINDOW)
         
         # Central widget
         central_widget = QWidget()
@@ -284,25 +105,7 @@ class MainWindow(QMainWindow):
         """Create header with status and quick actions"""
         header = QWidget()
         header.setFixedHeight(60)
-        header.setStyleSheet("""
-            QWidget {
-                background-color: #4CAF50;
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: white;
-                color: #4CAF50;
-                border: none;
-                padding: 5px 15px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-            }
-        """)
+        header.setStyleSheet(styles.HEADER)
         
         layout = QHBoxLayout()
         layout.setContentsMargins(20, 10, 20, 10)
@@ -479,19 +282,7 @@ class MainWindow(QMainWindow):
         
         # Test button (hidden by default)
         self.cloud_test_btn = QPushButton("📤 Test Sync")
-        self.cloud_test_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        self.cloud_test_btn.setStyleSheet(styles.BTN_PRIMARY)
         self.cloud_test_btn.clicked.connect(self.test_cloud_sync)
         self.cloud_test_btn.setVisible(False)
         cloud_card_layout.addWidget(self.cloud_test_btn)
@@ -505,31 +296,12 @@ class MainWindow(QMainWindow):
         info_layout.setContentsMargins(0, 0, 0, 0)
         
         info_label = QLabel("💡 Local P2P: Devices on the same WiFi will appear below")
-        info_label.setStyleSheet("""
-            QLabel {
-                background-color: #E3F2FD;
-                color: #1976D2;
-                padding: 12px;
-                border-radius: 6px;
-            }
-        """)
+        info_label.setStyleSheet(styles.INFO_BOX)
         info_label.setWordWrap(True)
         info_layout.addWidget(info_label, 1)
         
         refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-        """)
+        refresh_btn.setStyleSheet(styles.BTN_SECONDARY)
         refresh_btn.clicked.connect(self.update_devices_display)
         info_layout.addWidget(refresh_btn)
         
@@ -598,19 +370,7 @@ class MainWindow(QMainWindow):
         
         # Save button
         save_btn = QPushButton("Save Settings")
-        save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 10px;
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        save_btn.setStyleSheet(styles.BTN_PRIMARY)
         save_btn.clicked.connect(self.save_settings)
         layout.addRow(save_btn)
         
@@ -621,13 +381,7 @@ class MainWindow(QMainWindow):
         """Create a statistics card widget"""
         card = QWidget()
         card.setFixedSize(200, 120)
-        card.setStyleSheet("""
-            QWidget {
-                background-color: white;
-                border-radius: 8px;
-                border: 1px solid #e0e0e0;
-            }
-        """)
+        card.setStyleSheet(styles.CARD)
         
         layout = QVBoxLayout()
         layout.setContentsMargins(15, 15, 15, 15)
