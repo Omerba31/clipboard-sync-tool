@@ -128,6 +128,70 @@ class ClipboardCrypto {
     isInitialized() {
         return this.key !== null;
     }
+
+    /**
+     * Test decryption with known Python-encrypted data
+     * Call this from browser console: await clipboardCrypto.testCompatibility()
+     */
+    async testCompatibility() {
+        console.log('=== Crypto Compatibility Test ===');
+        
+        // Test with room 'test-room' and empty password
+        const testRoomId = 'test-room';
+        const testPassword = '';
+        
+        // Initialize with test credentials
+        await this.init(testRoomId, testPassword);
+        
+        // This was encrypted by Python with room='test-room', password=''
+        // Plaintext: 'hello'
+        // We need to generate a fresh one each time since IV is random
+        
+        // First, test that we can encrypt and decrypt ourselves
+        const testPlaintext = 'hello from browser';
+        console.log('Test plaintext:', testPlaintext);
+        
+        const encrypted = await this.encrypt(testPlaintext);
+        console.log('Encrypted (base64):', encrypted);
+        
+        const decrypted = await this.decrypt(encrypted);
+        console.log('Decrypted:', decrypted);
+        console.log('Self-test passed:', decrypted === testPlaintext);
+        
+        // Now export the derived key for comparison
+        // Note: We set extractable=false, so we can't export the actual key bytes
+        // But we can test decryption of Python-encrypted data
+        
+        return { encrypted, decrypted, success: decrypted === testPlaintext };
+    }
+
+    /**
+     * Test decryption of Python-encrypted data
+     * Call from browser console: await clipboardCrypto.testPythonDecrypt()
+     */
+    async testPythonDecrypt() {
+        console.log('=== Python Decryption Test ===');
+        
+        // Initialize with test credentials
+        await this.init('test-room', '');
+        
+        // This was encrypted by Python:
+        // room_id='test-room', password='', plaintext='hello from python test'
+        const pythonEncrypted = 'gGrsPiT7H6yPk5t4Vrd+6ytlaBtScg70Z0KZbWobi9mP57wdpuuXZlfCNVsiVxoH2pU=';
+        const expectedPlaintext = 'hello from python test';
+        
+        try {
+            const decrypted = await this.decrypt(pythonEncrypted);
+            console.log('Python encrypted:', pythonEncrypted);
+            console.log('Decrypted:', decrypted);
+            console.log('Expected:', expectedPlaintext);
+            console.log('SUCCESS:', decrypted === expectedPlaintext);
+            return { success: true, decrypted };
+        } catch (error) {
+            console.error('FAILED:', error.message);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 // Export singleton instance

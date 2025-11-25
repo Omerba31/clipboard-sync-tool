@@ -170,6 +170,7 @@ class CloudRelayClient:
             # Initialize encryption
             if self.encryption_enabled:
                 try:
+                    logger.info(f"Initializing encryption with room='{room_id}', password_length={len(room_password)}")
                     self.crypto.init(room_id, room_password)
                     logger.info("E2E encryption initialized")
                 except Exception as e:

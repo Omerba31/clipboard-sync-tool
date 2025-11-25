@@ -99,8 +99,13 @@ async function connectToServer() {
     // Initialize encryption
     if (encryptionEnabled && typeof clipboardCrypto !== 'undefined') {
         try {
+            console.log('[🔐] Initializing encryption with:');
+            console.log('     Room ID:', roomId);
+            console.log('     Password length:', roomPassword.length);
+            console.log('     Password (masked):', roomPassword ? '*'.repeat(roomPassword.length) : '(empty)');
+            
             await clipboardCrypto.init(roomId, roomPassword);
-            console.log('[🔐] E2E encryption enabled with room:', roomId, 'password:', roomPassword ? '(set)' : '(empty)');
+            console.log('[🔐] E2E encryption enabled');
         } catch (err) {
             console.error('[🔐] Encryption init failed:', err);
             encryptionEnabled = false;
@@ -328,7 +333,14 @@ async function receiveFromDesktop(data) {
     const isEncrypted = data.encrypted === true;
     let content;
     
-    console.log('[📋] Processing received data:', { contentType, isEncrypted, hasEncryptedContent: !!data.encrypted_content });
+    console.log('[📋] Processing received data:', { 
+        contentType, 
+        isEncrypted, 
+        hasEncryptedContent: !!data.encrypted_content,
+        encryptedContentPreview: data.encrypted_content ? data.encrypted_content.substring(0, 50) + '...' : 'none',
+        cryptoInitialized: clipboardCrypto.isInitialized(),
+        encryptionEnabled: encryptionEnabled
+    });
     
     try {
         if (isEncrypted) {
@@ -340,10 +352,12 @@ async function receiveFromDesktop(data) {
             }
             
             try {
+                console.log('[🔐] Attempting decryption...');
                 content = await clipboardCrypto.decrypt(data.encrypted_content);
-                console.log('[🔐] Successfully decrypted content');
+                console.log('[🔐] Successfully decrypted content:', content.substring(0, 50));
             } catch (decryptError) {
                 console.error('[🔐] Decryption failed:', decryptError);
+                console.error('[🔐] Current crypto state - room:', clipboardCrypto.roomId, 'password length:', clipboardCrypto.password?.length || 0);
                 showNotification('⚠️ Decryption failed - wrong password?', 'error');
                 return;
             }
