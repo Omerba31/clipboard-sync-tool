@@ -6,7 +6,7 @@ Node.js relay server for clipboard sync between desktop and mobile devices.
 
 **Free tier:** $5 credit/month (~500 hours)
 
-### Option 1: CLI (Recommended)
+### Quick Deploy
 
 ```bash
 # Windows
@@ -16,13 +16,7 @@ Node.js relay server for clipboard sync between desktop and mobile devices.
 chmod +x scripts/deploy.sh && ./scripts/deploy.sh
 ```
 
-### Option 2: Web Dashboard
-
-1. **Go to** https://railway.app/new
-2. **Click** "Deploy from GitHub repo"
-3. **Select** `clipboard-sync-tool` repository
-4. **Set Root Directory** to `cloud-relay` (Settings → Service)
-5. **Generate Domain** (Settings → Domains)
+See [main README](../README.md#deploy-your-own-cloud-relay) for web dashboard instructions.
 
 Your URL: `https://your-app.up.railway.app`
 

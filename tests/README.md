@@ -7,6 +7,7 @@ This directory contains tests for the Clipboard Sync Tool.
 - **unit/** - Unit tests for individual components
   - `test_clipboard.py` - Clipboard monitoring and dependency tests
   - `test_encryption.py` - E2E encryption tests (AES-256-GCM)
+  - `test_crypto_compatibility.py` - Python ↔ JavaScript encryption compatibility
   - `test_sync_engine.py` - Sync engine functionality tests
 
 - **integration/** - Integration tests for system components
@@ -63,6 +64,7 @@ python -m pytest tests/ -v --cov=core --cov=gui
 |-----------|-------------|
 | `test_clipboard.py` | Tests for clipboard monitoring, dependencies |
 | `test_encryption.py` | Tests for AES-256-GCM encryption, key derivation |
+| `test_crypto_compatibility.py` | Tests Python ↔ JavaScript encryption compatibility |
 | `test_sync_engine.py` | Tests for sync engine, settings, QR pairing |
 
 ### Integration Tests (`tests/integration/`)
@@ -96,6 +98,6 @@ class TestMyFeature:
 
 ## Test Requirements
 
-- Python 3.8+
-- pytest
+- Python 3.10+
+- pytest (auto-installed with `pip install -r requirements.txt`)
 - All dependencies from requirements.txt

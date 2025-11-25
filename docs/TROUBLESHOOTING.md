@@ -37,11 +37,10 @@ Free tier limits (Railway.app):
 
 Wait a minute or deploy your own relay.
 
-## Security Notes
+## Security Tips
 
-| Mode | Encryption | Use For |
-|------|------------|---------||
-| Cloud Relay | ✅ AES-256-GCM | All data (E2E encrypted) |
-| Local P2P | ✅ ECC + AES-256-GCM | Sensitive data |
+- ⚠️ **Password must match exactly** on all devices (or leave empty on all)
+- Use unique Room IDs to avoid conflicts with other users
+- Both Cloud Relay and Local P2P use end-to-end encryption
 
-**Both modes use end-to-end encryption.** Use unique Room IDs and add a password for extra security.
+See [main README](../README.md#security) for encryption details.

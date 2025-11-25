@@ -81,7 +81,8 @@ Computer A ←→ Computer B
 - Server never sees your plaintext data
 - AES-256-GCM encryption
 - Key derived from Room ID + optional password
-- Add a password for extra security
+
+⚠️ **Password must match exactly on all devices** (or leave empty on all). Different passwords = decryption fails.
 
 **Local P2P extra features:**
 - ECDH key exchange via QR code

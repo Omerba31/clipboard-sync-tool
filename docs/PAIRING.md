@@ -22,9 +22,6 @@ Devices on the same WiFi network appear automatically in the Devices tab.
 
 ## Security
 
-| Mode | Encryption | Best For |
-|------|------------|----------|
-| Cloud Relay | ✅ AES-256-GCM | All data (E2E encrypted) |
-| Local P2P | ✅ ECC + AES-256-GCM | Sensitive data |
+⚠️ **Password must match on all devices.** If you set a password on desktop, use the exact same password on mobile/other devices.
 
-**Both modes use end-to-end encryption.** Add an encryption password in the connection dialog for extra security.
+Both modes use end-to-end encryption. See [main README](../README.md#security) for details.
