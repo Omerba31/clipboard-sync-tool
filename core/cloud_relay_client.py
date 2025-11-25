@@ -106,17 +106,21 @@ class CloudRelayClient:
                 from_device = data.get('from_device', data.get('from_name', 'unknown'))
                 is_encrypted = data.get('encrypted', False)
                 
-                logger.info(f"Received clipboard from {from_device}: {data_type} (encrypted={is_encrypted})")
+                logger.info(f"Received clipboard from {from_device}: {data_type} (encrypted={is_encrypted}, crypto_ready={self.crypto.is_initialized()})")
                 
-                # Decrypt if encrypted and we have crypto initialized
-                if is_encrypted and self.crypto.is_initialized():
-                    try:
-                        content = self.crypto.decrypt(content)
-                        logger.debug("Successfully decrypted content")
-                    except Exception as e:
-                        logger.error(f"Decryption failed: {e}")
+                # Decrypt if encrypted
+                if is_encrypted:
+                    if self.crypto.is_initialized():
+                        try:
+                            content = self.crypto.decrypt(content)
+                            logger.info("Successfully decrypted content")
+                        except Exception as e:
+                            logger.error(f"Decryption failed: {e} - wrong password?")
+                            return
+                    else:
+                        logger.error("Received encrypted data but crypto not initialized - cannot decrypt")
                         return
-                elif data_type == 'text' and not is_encrypted:
+                elif data_type == 'text':
                     # Legacy base64 decode for unencrypted text
                     try:
                         content = base64.b64decode(content).decode('utf-8')

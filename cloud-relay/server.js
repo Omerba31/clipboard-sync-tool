@@ -219,7 +219,7 @@ io.on('connection', (socket) => {
     if (!device) return;
     
     const { roomId } = device;
-    const { encrypted_content, content_type, timestamp } = data;
+    const { encrypted_content, content_type, encrypted, timestamp } = data;
     
     // Validate message size
     const messageSize = JSON.stringify(data).length;
@@ -256,7 +256,7 @@ io.on('connection', (socket) => {
       return;
     }
     
-    console.log(`[📋] ${device.deviceName} sent ${content_type} (${messageSize} bytes) - Bandwidth: ${(totalBandwidthUsed/(1024*1024)).toFixed(2)}MB/${BANDWIDTH_LIMIT_MB}MB`);
+    console.log(`[📋] ${device.deviceName} sent ${content_type} (${messageSize} bytes, encrypted=${!!encrypted}) - Bandwidth: ${(totalBandwidthUsed/(1024*1024)).toFixed(2)}MB/${BANDWIDTH_LIMIT_MB}MB`);
     
     // Forward to all other devices in the room
     socket.to(roomId).emit('clipboard_data', {
@@ -265,6 +265,7 @@ io.on('connection', (socket) => {
       from_type: device.deviceType,
       encrypted_content,
       content_type,
+      encrypted: !!encrypted,
       timestamp: timestamp || Date.now()
     });
   });

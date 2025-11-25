@@ -533,6 +533,55 @@ function loadCredentials() {
     return saved ? JSON.parse(saved) : null;
 }
 
+function clearCredentials() {
+    localStorage.removeItem('clipboard_sync_credentials');
+}
+
+function disconnect() {
+    if (socket && socket.connected) {
+        socket.disconnect();
+    }
+    
+    // Clear credentials
+    clearCredentials();
+    
+    // Reset state
+    roomId = null;
+    deviceName = null;
+    deviceId = null;
+    roomPassword = '';
+    clipboardHistory = [];
+    encryptionEnabled = true;
+    
+    // Reset crypto
+    if (typeof clipboardCrypto !== 'undefined') {
+        clipboardCrypto.key = null;
+        clipboardCrypto.roomId = null;
+        clipboardCrypto.password = null;
+    }
+    
+    // Clear UI
+    document.getElementById('receivedContent').innerHTML = `
+        <div class="empty-state">
+            <p>📭 No content yet</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Content from other devices will appear here.<br>Tap to copy to clipboard.</p>
+        </div>
+    `;
+    document.getElementById('devicesList').innerHTML = '';
+    document.getElementById('copyAllBtn').style.display = 'none';
+    
+    // Show connection modal
+    document.getElementById('connectionModal').classList.add('show');
+    
+    // Clear input fields for fresh start
+    document.getElementById('roomIdInput').value = '';
+    document.getElementById('roomPasswordInput').value = '';
+    document.getElementById('deviceNameInput').value = '';
+    
+    updateStatus('Disconnected', false);
+    showNotification('👋 Disconnected - enter new credentials');
+}
+
 // Auto-reconnect on page visibility change
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && socket && !socket.connected) {
