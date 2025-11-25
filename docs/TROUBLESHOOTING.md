@@ -7,6 +7,8 @@
 | Can't connect | Check URL and Room ID are correct |
 | Mobile not receiving | Refresh browser, check same Room ID |
 | Desktop not receiving | Reconnect via "Cloud Relay" button |
+| Garbled/corrupted text | Password mismatch - use same password on all devices |
+| "Decryption failed" | Room ID or password doesn't match |
 | "Already connected" | Restart app, refresh mobile browser |
 
 ## Local P2P Issues
@@ -38,8 +40,8 @@ Wait a minute or deploy your own relay.
 ## Security Notes
 
 | Mode | Encryption | Use For |
-|------|------------|---------|
-| Cloud Relay | Base64 only | Non-sensitive data |
-| Local P2P | AES-256-GCM | Sensitive data |
+|------|------------|---------||
+| Cloud Relay | ✅ AES-256-GCM | All data (E2E encrypted) |
+| Local P2P | ✅ ECC + AES-256-GCM | Sensitive data |
 
-Use unique Room IDs. Don't sync passwords via cloud relay.
+**Both modes use end-to-end encryption.** Use unique Room IDs and add a password for extra security.

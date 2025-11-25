@@ -1,5 +1,9 @@
 ﻿{
-    "deployedAt":  "2025-11-25 20:57:57",
-    "cloudRelayUrl":  "https://n",
+    "deployedAt":  "2025-11-25 21:22:26",
+    "cloudRelayUrl":  [
+                          "Domains already exists on the service:",
+                          "≡ƒÜÇ https://endearing-delight-production.up.railway.app"
+                      ],
+    "deployMethod":  "cli",
     "platform":  "railway"
 }

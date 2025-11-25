@@ -459,7 +459,7 @@ class SyncEngine:
     
     # ==================== Cloud Relay Methods ====================
     
-    async def connect_to_cloud_relay(self, server_url: str, room_id: str, device_name: str = None) -> bool:
+    async def connect_to_cloud_relay(self, server_url: str, room_id: str, device_name: str = None, password: str = '') -> bool:
         """
         Connect to cloud relay server for mobile sync
         
@@ -467,6 +467,7 @@ class SyncEngine:
             server_url: URL of the cloud relay server (e.g., https://your-app.fly.dev)
             room_id: Room ID to join for syncing
             device_name: Optional custom device name (defaults to hostname)
+            password: Optional encryption password for E2E encryption
             
         Returns:
             True if connected successfully
@@ -488,9 +489,9 @@ class SyncEngine:
                 import socket
                 device_name = socket.gethostname() or platform.node() or 'Desktop'
             
-            # Connect to server
+            # Connect to server with password for E2E encryption
             success = await self.cloud_relay.connect_to_server(
-                server_url, room_id, self.device_id, device_name
+                server_url, room_id, self.device_id, device_name, password
             )
             
             if success:
@@ -531,6 +532,14 @@ class SyncEngine:
             # Set incoming clipboard checksum to prevent echo (consistent with P2P)
             import hashlib
             self.incoming_clipboard = hashlib.sha256(content.encode() if isinstance(content, str) else content).hexdigest()
+            
+            # Add to sync history for GUI notification
+            self._add_to_history('received', {
+                'content': content[:100] if isinstance(content, str) else '[binary data]',
+                'content_type': data_type,
+                'device': 'Cloud Relay',
+                'source': 'cloud_relay'
+            })
             
             # Update local clipboard
             if data_type == 'text':

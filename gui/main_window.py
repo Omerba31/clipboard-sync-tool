@@ -459,6 +459,9 @@ class MainWindow(QMainWindow):
                 self.poll_timer.timeout.connect(self.check_for_new_items)
                 self.poll_timer.start(500)  # Check every 500ms
                 
+                # Track last cloud relay item to avoid duplicates
+                self._last_cloud_history_len = 0
+                
                 self.status_label.setText("🟢 Sync Active")
                 print("✅ Sync engine started successfully")
             except Exception as e:
@@ -477,6 +480,9 @@ class MainWindow(QMainWindow):
         """Check if monitor has new items and add them to GUI"""
         if not self.sync_engine or not self.sync_engine.monitor:
             return
+        
+        # Check for cloud relay received items
+        self._check_cloud_relay_history()
         
         # Get recent history from monitor
         monitor_history = self.sync_engine.monitor.get_history(1)
@@ -529,6 +535,59 @@ class MainWindow(QMainWindow):
                 # Update stats
                 self.total_syncs_card.value_label.setText(str(len(self.clipboard_history)))
     
+    def _check_cloud_relay_history(self):
+        """Check for new cloud relay items in sync history"""
+        if not hasattr(self, '_last_cloud_history_len'):
+            self._last_cloud_history_len = 0
+            
+        sync_history = self.sync_engine.get_sync_history(10)
+        current_len = len(sync_history)
+        
+        # Check for new received items from cloud relay
+        for item in sync_history[:max(0, current_len - self._last_cloud_history_len)]:
+            if item.get('action') == 'received' and item.get('data', {}).get('source') == 'cloud_relay':
+                data = item['data']
+                content = data.get('content', '')
+                content_type = data.get('content_type', 'text')
+                device = data.get('device', 'Cloud Relay')
+                
+                # Parse timestamp
+                from datetime import datetime as dt
+                try:
+                    timestamp = dt.fromisoformat(item.get('timestamp', dt.now().isoformat()))
+                except:
+                    timestamp = dt.now()
+                
+                # Add to activity list
+                activity_text = f"📥 [{timestamp.strftime('%H:%M:%S')}] {content_type.title()} from {device}: {content[:40]}..."
+                self.activity_list.insertItem(0, activity_text)
+                while self.activity_list.count() > 10:
+                    self.activity_list.takeItem(self.activity_list.count() - 1)
+                
+                # Create widget for history tab (if text)
+                if content_type == 'text' and content:
+                    item_widget = ClipboardItemWidget(
+                        content=content,
+                        content_type=content_type,
+                        timestamp=timestamp,
+                        device=device,
+                        is_sent=False  # Received, not sent
+                    )
+                    
+                    # Remove stretch, add widget, re-add stretch
+                    if self.history_layout.count() > 0:
+                        last_item = self.history_layout.itemAt(self.history_layout.count() - 1)
+                        if isinstance(last_item, QSpacerItem):
+                            self.history_layout.removeItem(last_item)
+                    
+                    self.history_layout.insertWidget(0, item_widget)
+                    self.history_widgets.append(item_widget)
+                    self.history_layout.addStretch()
+                
+                print(f"📥 Cloud relay item added to GUI: {content[:50]}...")
+        
+        self._last_cloud_history_len = current_len
+
     def add_to_history_simple(self, content: str):
         """Add item to history in simple mode"""
         timestamp = datetime.now()
@@ -1068,6 +1127,31 @@ class MainWindow(QMainWindow):
         """)
         layout.addWidget(self.room_id_input)
         
+        # Encryption Password input (optional)
+        password_label = QLabel("🔐 Encryption Password (optional):")
+        password_label.setStyleSheet("font-weight: bold; margin-top: 15px;")
+        layout.addWidget(password_label)
+        
+        self.cloud_password_input = QLineEdit()
+        self.cloud_password_input.setPlaceholderText("Leave empty for basic encryption")
+        self.cloud_password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.cloud_password_input.setStyleSheet("""
+            QLineEdit {
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #4CAF50;
+            }
+        """)
+        layout.addWidget(self.cloud_password_input)
+        
+        password_hint = QLabel("💡 Same password must be used on all devices")
+        password_hint.setStyleSheet("color: #666; font-size: 11px; margin-left: 5px;")
+        layout.addWidget(password_hint)
+        
         # Device name input
         device_name_label = QLabel("Device Name (shown to other devices):")
         device_name_label.setStyleSheet("font-weight: bold; margin-top: 15px;")
@@ -1158,6 +1242,7 @@ class MainWindow(QMainWindow):
         url = self.cloud_url_input.text().strip()
         room_id = self.room_id_input.text().strip()
         device_name = self.device_name_input.text().strip()
+        password = self.cloud_password_input.text()  # Don't strip - spaces may be intentional
         
         if not url:
             QMessageBox.warning(dialog, "Missing URL", "Please enter your cloud relay URL")
@@ -1212,7 +1297,7 @@ class MainWindow(QMainWindow):
             try:
                 # Run async connection
                 future = asyncio.run_coroutine_threadsafe(
-                    self.sync_engine.connect_to_cloud_relay(url, room_id, device_name),
+                    self.sync_engine.connect_to_cloud_relay(url, room_id, device_name, password),
                     self.sync_engine.loop
                 )
                 # Wait for result with timeout
