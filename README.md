@@ -73,15 +73,18 @@ Computer A ←→ Computer B
 | Mode | Encryption | Data Path |
 |------|------------|-----------|
 | **Local P2P** | ✅ ECC + AES-256-GCM | Device to device only |
-| **Cloud Relay** | ⚠️ Base64 only | Through cloud server |
+| **Cloud Relay** | ✅ AES-256-GCM | Through cloud server (encrypted) |
 
-**Local P2P encryption details:**
+**Both modes use end-to-end encryption:**
+- Server never sees your plaintext data
+- AES-256-GCM encryption
+- Key derived from Room ID + optional password
+- Add a password for extra security
+
+**Local P2P extra features:**
 - ECDH key exchange via QR code
-- AES-256-GCM for content
 - Forward secrecy per message
 - Data never leaves your network
-
-**Cloud relay:** Use unique Room IDs. Don't sync sensitive data.
 
 ---
 

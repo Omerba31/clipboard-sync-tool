@@ -40,12 +40,16 @@ curl https://your-app.up.railway.app/health
 1. Click **☁️ Cloud Relay**
 2. Enter your Railway URL
 3. Enter Room ID (e.g., `my-room`)
-4. Connect
+4. Enter Password (optional, for extra security)
+5. Connect
 
 ### Mobile
 1. Open Railway URL in browser
 2. Enter same Room ID
-3. Connect
+3. Enter same Password (if used)
+4. Connect
+
+⚠️ **Both devices must use the same Room ID + Password to decrypt each other's messages.**
 
 ---
 
@@ -64,11 +68,17 @@ Check usage: `GET /stats`
 
 ## Security
 
-⚠️ **Base64 encoding only** (not encrypted)
+✅ **End-to-End Encrypted (AES-256-GCM)**
 
-- Use unique Room IDs
-- Don't sync passwords or sensitive data
-- For sensitive data, use Local P2P mode (end-to-end encrypted)
+- All data is encrypted client-side before sending
+- Server only relays encrypted blobs - cannot read your content
+- Encryption key derived from Room ID + optional password
+- Add a password in the connection dialog for extra security
+
+**How it works:**
+1. Key derived from Room ID + password using PBKDF2 (100,000 iterations)
+2. Each message encrypted with AES-256-GCM + random IV
+3. Server passes encrypted data without decryption
 
 ---
 
