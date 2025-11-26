@@ -61,10 +61,28 @@ if ! command -v railway &> /dev/null; then
     echo "Installing Railway CLI via npm..."
     npm install -g @railway/cli
     
+    # Add npm global bin to PATH
+    NPM_BIN=$(npm bin -g 2>/dev/null)
+    if [ -n "$NPM_BIN" ] && [ -d "$NPM_BIN" ]; then
+        export PATH="$NPM_BIN:$PATH"
+    fi
+    
+    # Also check common npm global locations
+    if ! command -v railway &> /dev/null; then
+        for path in "$HOME/.npm-global/bin" "$HOME/.local/bin" "/usr/local/bin"; do
+            if [ -f "$path/railway" ]; then
+                export PATH="$path:$PATH"
+                break
+            fi
+        done
+    fi
+    
     if ! command -v railway &> /dev/null; then
         echo ""
-        echo "❌ Railway CLI installation failed."
-        echo "Use Web Dashboard instead: https://railway.app/new"
+        echo "Railway CLI installed but not found in PATH."
+        echo "Please restart terminal and run ./deploy.sh again"
+        echo ""
+        echo "Or use Web Dashboard: https://railway.app/new"
         exit 1
     fi
 fi
@@ -112,22 +130,32 @@ if [ $? -eq 0 ]; then
     DOMAIN=$(railway domain 2>&1)
     
     if [[ $DOMAIN == *"https://"* ]]; then
-        echo ""
-        echo "Your cloud relay URL:"
-        echo "  $DOMAIN"
+        CLEAN_URL=$(echo "$DOMAIN" | tr -d '[:space:]')
         
-        # Save to config
+        # Save to config first
         cd ..
         cat > cloud-relay-config.json <<EOF
 {
-  "cloudRelayUrl": "$DOMAIN",
+  "cloudRelayUrl": "$CLEAN_URL",
   "deployedAt": "$(date '+%Y-%m-%d %H:%M:%S')",
   "platform": "railway",
   "deployMethod": "cli"
 }
 EOF
+        
+        # Display prominent URL box
         echo ""
-        echo "✅ URL saved to cloud-relay-config.json"
+        echo "========================================"
+        echo "  CLOUD RELAY DEPLOYED SUCCESSFULLY!   "
+        echo "========================================"
+        echo ""
+        echo "  Your URL:"
+        echo ""
+        echo "    $CLEAN_URL"
+        echo ""
+        echo "  (URL saved to cloud-relay-config.json)"
+        echo ""
+        echo "========================================"
     else
         cd ..
         echo ""
@@ -143,10 +171,8 @@ else
 fi
 
 echo ""
-echo "================================"
 echo "Next Steps:"
-echo "================================"
-echo "1. Run desktop app: python main.py"
-echo "2. Click 'Cloud Relay' and enter Room ID"
-echo "3. Open URL on mobile, enter same Room ID"
+echo "  1. Run desktop app: python main.py"
+echo "  2. Click 'Cloud Relay' and enter Room ID"
+echo "  3. Open URL on mobile, enter same Room ID"
 echo ""

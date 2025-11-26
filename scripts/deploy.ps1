@@ -41,20 +41,105 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     }
 }
 
-# Check if Railway CLI is installed
-$railwayCli = Get-Command railway -ErrorAction SilentlyContinue
+# Function to show web dashboard instructions
+function Show-WebDashboardInstructions {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "  DEPLOY VIA WEB DASHBOARD" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  1. Open: https://railway.app/new" -ForegroundColor White
+    Write-Host "  2. Click 'Deploy from GitHub repo'" -ForegroundColor White
+    Write-Host "  3. Select 'clipboard-sync-tool' repository" -ForegroundColor White
+    Write-Host "  4. Set Root Directory to: cloud-relay" -ForegroundColor White
+    Write-Host "  5. Click Deploy" -ForegroundColor White
+    Write-Host "  6. Go to Settings > Networking > Generate Domain" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Then update cloud-relay-config.json with your URL" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Try to open browser
+    Start-Process "https://railway.app/new"
+}
 
-if (-not $railwayCli) {
+# Check if Railway CLI is installed and working
+$railwayCli = Get-Command railway -ErrorAction SilentlyContinue
+$railwayWorking = $false
+
+if ($railwayCli) {
+    # Test if CLI actually works (some Node.js versions have issues)
+    $testOutput = railway --version 2>&1
+    if ($testOutput -and $testOutput -notmatch "error") {
+        $railwayWorking = $true
+    }
+}
+
+if (-not $railwayWorking) {
     Write-Host "Installing Railway CLI via npm..." -ForegroundColor Yellow
-    npm install -g @railway/cli
+    npm install -g @railway/cli 2>$null
+    
+    # Refresh PATH to find newly installed global npm packages
+    $npmGlobalPath = (npm root -g) -replace 'node_modules$', ''
+    if ($npmGlobalPath -and (Test-Path $npmGlobalPath)) {
+        $env:Path = "$npmGlobalPath;$env:Path"
+    }
+    
+    # Also add npm global bin to PATH
+    $npmBin = npm bin -g 2>$null
+    if ($npmBin -and ($npmBin -is [string]) -and ($npmBin.Trim() -ne "")) {
+        $npmBinPath = $npmBin.Trim()
+        if (Test-Path $npmBinPath) {
+            $env:Path = "$npmBinPath;$env:Path"
+        }
+    }
+    
+    # Try to find railway again
     $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
     
     if (-not $railwayCli) {
+        # Try common npm global locations on Windows
+        $possiblePaths = @(
+            "$env:APPDATA\npm\railway.cmd",
+            "$env:APPDATA\npm\railway",
+            "$env:ProgramFiles\nodejs\railway.cmd"
+        )
+        
+        foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+                $railwayPath = Split-Path $path -Parent
+                $env:Path = "$railwayPath;$env:Path"
+                $railwayCli = Get-Command railway -ErrorAction SilentlyContinue
+                if ($railwayCli) { break }
+            }
+        }
+    }
+    
+    if (-not $railwayCli) {
         Write-Host ""
-        Write-Host "Railway CLI installation failed." -ForegroundColor Red
-        Write-Host "Use Web Dashboard instead: https://railway.app/new" -ForegroundColor Cyan
+        Write-Host "Railway CLI not found in PATH." -ForegroundColor Yellow
+        Show-WebDashboardInstructions
         exit 1
     }
+    
+    # Test if CLI actually works
+    $testOutput = railway --version 2>&1
+    if (-not $testOutput -or $testOutput -eq "") {
+        Write-Host ""
+        Write-Host "Railway CLI installed but not working (Node.js compatibility issue)." -ForegroundColor Yellow
+        Show-WebDashboardInstructions
+        exit 1
+    }
+    
+    $railwayWorking = $true
+}
+
+if (-not $railwayWorking) {
+    Write-Host ""
+    Write-Host "Railway CLI not working properly." -ForegroundColor Yellow
+    Show-WebDashboardInstructions
+    exit 1
 }
 
 Write-Host "Railway CLI found" -ForegroundColor Green
@@ -103,21 +188,31 @@ if ($LASTEXITCODE -eq 0) {
     $domain = railway domain 2>&1
     
     if ($domain -match "https://") {
-        Write-Host ""
-        Write-Host "Your cloud relay URL:" -ForegroundColor Cyan
-        Write-Host "  $domain" -ForegroundColor White
+        $cleanUrl = $domain.Trim()
         
-        # Save to config
+        # Save to config first
         Pop-Location
         $config = @{
-            cloudRelayUrl = $domain.Trim()
+            cloudRelayUrl = $cleanUrl
             deployedAt = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
             platform = "railway"
             deployMethod = "cli"
         }
         $config | ConvertTo-Json | Out-File "cloud-relay-config.json" -Encoding UTF8
+        
+        # Display prominent URL box
         Write-Host ""
-        Write-Host "URL saved to cloud-relay-config.json" -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host "  CLOUD RELAY DEPLOYED SUCCESSFULLY!   " -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "  Your URL:" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "    $cleanUrl" -ForegroundColor White -BackgroundColor DarkBlue
+        Write-Host ""
+        Write-Host "  (URL saved to cloud-relay-config.json)" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Green
     } else {
         Pop-Location
         Write-Host ""
@@ -133,10 +228,8 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 Write-Host ""
-Write-Host "================================" -ForegroundColor Cyan
 Write-Host "Next Steps:" -ForegroundColor Cyan
-Write-Host "================================" -ForegroundColor Cyan
-Write-Host "1. Run desktop app: python main.py" -ForegroundColor White
-Write-Host "2. Click 'Cloud Relay' and enter Room ID" -ForegroundColor White
-Write-Host "3. Open URL on mobile, enter same Room ID" -ForegroundColor White
+Write-Host "  1. Run desktop app: python main.py" -ForegroundColor White
+Write-Host "  2. Click 'Cloud Relay' and enter Room ID" -ForegroundColor White
+Write-Host "  3. Open URL on mobile, enter same Room ID" -ForegroundColor White
 Write-Host ""
