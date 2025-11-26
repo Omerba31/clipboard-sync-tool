@@ -9,18 +9,15 @@ import threading
 import hashlib
 import io
 import json
-from typing import Optional, Dict, Any, Callable
+import base64
+from typing import Optional, Dict, Any, Callable, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-import base64
-import hashlib
-import asyncio
 
 import pyperclip
 from PIL import Image, ImageGrab
 from loguru import logger
-from typing import Optional, Dict, Any, Callable, Tuple
 
 class ContentType(Enum):
     """Content types that can be synced"""

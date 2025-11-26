@@ -1,9 +1,6 @@
 ﻿{
-    "deployedAt":  "2025-11-26 20:04:21",
-    "cloudRelayUrl":  [
-                          "Domains already exists on the service:",
-                          "≡ƒÜÇ https://endearing-delight-production.up.railway.app"
-                      ],
-    "deployMethod":  "cli",
-    "platform":  "railway"
+    "deployedAt": "2025-11-26 20:04:21",
+    "cloudRelayUrl": "https://clipboard-sync-tool-production.up.railway.app",
+    "deployMethod": "cli",
+    "platform": "railway"
 }
